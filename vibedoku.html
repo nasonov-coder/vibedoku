@@ -126,12 +126,25 @@
         .cell:nth-child(n+73):nth-child(-n+81) {
             border-bottom: 3px solid #4a5568;
         }
+        /* Rounded corners for edge cells */
+        .cell:nth-child(1) {
+            border-top-left-radius: 8px;
+        }
+        .cell:nth-child(9) {
+            border-top-right-radius: 8px;
+        }
+        .cell:nth-child(73) {
+            border-bottom-left-radius: 8px;
+        }
+        .cell:nth-child(81) {
+            border-bottom-right-radius: 8px;
+        }
         .cell.notes {
-            font-size: clamp(8px, 1.5vw, 12px) !important;
+            font-size: clamp(6px, 1.2vw, 10px) !important;
             display: grid !important;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(3, 1fr);
-            padding: 1px;
+            padding: 0;
             align-items: center;
             justify-items: center;
             gap: 0;
