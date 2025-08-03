@@ -200,6 +200,32 @@
             margin: 20px 0;
             text-align: center;
         }
+        .speed-controls {
+            background: #e8f0fe;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .speed-label {
+            font-weight: bold;
+            color: #333;
+        }
+        .speed-slider {
+            width: 200px;
+            vertical-align: middle;
+        }
+        .speed-value {
+            min-width: 50px;
+            text-align: left;
+            color: #1976D2;
+            font-weight: bold;
+        }
         .auto-btn {
             min-width: 180px;
         }
@@ -334,6 +360,16 @@
             <button class="auto-btn" id="autoLockedBtn" onclick="toggleAutoLocked()" style="background: #00796b;">Auto-Remove Locked: OFF</button>
         </div>
 
+        <div class="speed-controls">
+            <span class="speed-label">Animation Speed:</span>
+            <input type="range" class="speed-slider" id="animationSpeed" min="0" max="1000" value="500" oninput="updateAnimationSpeed(this.value)">
+            <span class="speed-value" id="animationSpeedValue">500ms</span>
+            
+            <span class="speed-label">Interval:</span>
+            <input type="range" class="speed-slider" id="intervalSpeed" min="0" max="2000" value="300" oninput="updateIntervalSpeed(this.value)">
+            <span class="speed-value" id="intervalSpeedValue">300ms</span>
+        </div>
+
         <div class="number-buttons">
             <button class="number-btn" onclick="placeNumber(1)">1</button>
             <button class="number-btn" onclick="placeNumber(2)">2</button>
@@ -375,10 +411,23 @@
         let autoFillHiddenSingles = false;
         let autoRemoveLocked = false;
         let moveHistory = [];
+        let animationDuration = 500; // ms
+        let intervalDuration = 300; // ms
         let startTime = null;
         let timerInterval = null;
         let isComplete = false;
         let puzzleLoaded = false;
+
+        // Speed control functions
+        function updateAnimationSpeed(value) {
+            animationDuration = parseInt(value);
+            document.getElementById('animationSpeedValue').textContent = value + 'ms';
+        }
+
+        function updateIntervalSpeed(value) {
+            intervalDuration = parseInt(value);
+            document.getElementById('intervalSpeedValue').textContent = value + 'ms';
+        }
 
         // Initialize empty grid
         function initGrid() {
@@ -891,11 +940,11 @@
             }
             
             if (autoRemoveLocked) {
-                setTimeout(() => checkAndRemoveLockedCandidates(), 100);
+                setTimeout(() => checkAndRemoveLockedCandidates(), intervalDuration);
             } else if (autoFillSingles) {
-                setTimeout(() => checkAndFillSingles(), 100);
+                setTimeout(() => checkAndFillSingles(), intervalDuration);
             } else if (autoFillHiddenSingles) {
-                setTimeout(() => checkAndFillHiddenSingles(), 100);
+                setTimeout(() => checkAndFillHiddenSingles(), intervalDuration);
             }
         }
 
@@ -957,10 +1006,10 @@
                         cell.classList.add('user-input');
                         
                         // Animate the auto-fill
-                        cell.style.animation = 'pulse 0.5s';
+                        cell.style.animation = `pulse ${animationDuration}ms`;
                         setTimeout(() => {
                             cell.style.animation = '';
-                        }, 500);
+                        }, animationDuration);
                         
                         // Check if correct
                         if (solution[r][c] !== num) {
@@ -995,7 +1044,7 @@
             if (filledAny) {
                 checkCompletion();
                 // Continue checking for more singles
-                setTimeout(() => checkAndFillSingles(), 300);
+                setTimeout(() => checkAndFillSingles(), intervalDuration);
             } else if (autoFillHiddenSingles) {
                 // If no naked singles found, check for hidden singles
                 checkAndFillHiddenSingles();
@@ -1122,7 +1171,7 @@
                     } else {
                         checkAndFillHiddenSingles();
                     }
-                }, 300);
+                }, intervalDuration);
             }
         }
 
@@ -1140,11 +1189,11 @@
             // Different animation color based on reason
             const color = reason === 'row' ? '#2196F3' : reason === 'column' ? '#4CAF50' : '#FF9800';
             cell.style.backgroundColor = color;
-            cell.style.animation = 'pulse 0.5s';
+            cell.style.animation = `pulse ${animationDuration}ms`;
             setTimeout(() => {
                 cell.style.animation = '';
                 cell.style.backgroundColor = '';
-            }, 500);
+            }, animationDuration);
             
             // Check if correct
             if (solution[row][col] !== num) {
@@ -1213,7 +1262,7 @@
                                             cell.style.backgroundColor = '#ffccbc';
                                             setTimeout(() => {
                                                 cell.style.backgroundColor = '';
-                                            }, 500);
+                                            }, animationDuration);
                                         }
                                     }
                                 }
@@ -1235,7 +1284,7 @@
                                             cell.style.backgroundColor = '#c8e6c9';
                                             setTimeout(() => {
                                                 cell.style.backgroundColor = '';
-                                            }, 500);
+                                            }, animationDuration);
                                         }
                                     }
                                 }
@@ -1277,7 +1326,7 @@
                                         cell.style.backgroundColor = '#ffecb3';
                                         setTimeout(() => {
                                             cell.style.backgroundColor = '';
-                                        }, 500);
+                                        }, animationDuration);
                                     }
                                 }
                             }
@@ -1317,7 +1366,7 @@
                                         cell.style.backgroundColor = '#e1bee7';
                                         setTimeout(() => {
                                             cell.style.backgroundColor = '';
-                                        }, 500);
+                                        }, animationDuration);
                                     }
                                 }
                             }
@@ -1337,7 +1386,7 @@
                         // Continue checking for more locked candidates
                         checkAndRemoveLockedCandidates();
                     }
-                }, 300);
+                }, intervalDuration);
             }
         }
 
