@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku with Custom Puzzle Input</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            padding: 20px;
+        }
+        .main-container {
+            display: flex;
+            gap: 30px;
+            max-width: 1200px;
+            width: 100%;
+        }
+        .game-container, .input-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .game-container {
+            flex: 1;
+        }
+        .input-container {
+            flex: 0 0 400px;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        h2 {
+            font-size: 20px;
+            margin-top: 25px;
+        }
+        .tab-buttons {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+        .tab-button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: #e0e0e0;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+            transition: background 0.3s;
+        }
+        .tab-button.active {
+            background: #2196F3;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .sudoku-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 50px);
+            grid-template-rows: repeat(9, 50px);
+            gap: 1px;
+            background-color: #333;
+            padding: 3px;
+            margin: 20px auto;
+        }
+        .cell {
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .cell:hover {
+            background-color: #e0e0e0;
+        }
+        .cell.selected {
+            background-color: #bbdefb;
+        }
+        .cell.fixed {
+            color: #333;
+            cursor: default;
+            background-color: #f5f5f5;
+        }
+        .cell.error {
+            color: red;
+            background-color: #ffebee;
+        }
+        .cell:nth-child(3n) {
+            border-right: 3px solid #333;
+        }
+        .cell:nth-child(n+19):nth-child(-n+27),
+        .cell:nth-child(n+46):nth-child(-n+54),
+        .cell:nth-child(n+73):nth-child(-n+81) {
+            border-bottom: 3px solid #333;
+        }
+        
+        /* Input Grid Styles */
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 35px);
+            grid-template-rows: repeat(9, 35px);
+            gap: 1px;
+            background-color: #333;
+            padding: 3px;
+            margin: 20px auto;
+        }
+        .input-cell {
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .input-cell:hover {
+            background-color: #e3f2fd;
+        }
+        .input-cell.filled {
+            background-color: #e3f2fd;
+            color: #1976D2;
+        }
+        .input-cell:nth-child(3n) {
+            border-right: 2px solid #333;
+        }
+        .input-cell:nth-child(n+19):nth-child(-n+27),
+        .input-cell:nth-child(n+46):nth-child(-n+54),
+        .input-cell:nth-child(n+73):nth-child(-n+81) {
+            border-bottom: 2px solid #333;
+        }
+        
+        .input-numbers {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            margin: 10px 0;
+        }
+        .input-num-btn {
+            width: 35px;
+            height: 35px;
+            border: none;
+            background: #e3f2fd;
+            color: #1976D2;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.2s;
+        }
+        .input-num-btn:hover {
+            background: #1976D2;
+            color: white;
+            transform: scale(1.05);
+        }
+        .input-num-btn.clear {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+        
+        .format-examples {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+        .format-examples h4 {
+            margin: 0 0 5px 0;
+            color: #666;
+        }
+        .format-examples pre {
+            margin: 5px 0;
+            padding: 5px;
+            background: white;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+        
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: #2196F3;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #1976D2;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        button.secondary {
+            background-color: #757575;
+        }
+        button.secondary:hover {
+            background-color: #616161;
+        }
+        button.success {
+            background-color: #4CAF50;
+        }
+        button.success:hover {
+            background-color: #45a049;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .number-buttons {
+            display: flex;
+            gap: 5px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+        .number-btn {
+            width: 45px;
+            height: 45px;
+            padding: 0;
+            font-size: 20px;
+        }
+        .status {
+            text-align: center;
+            font-size: 18px;
+            margin: 10px 0;
+            color: #666;
+        }
+        .complete {
+            color: green;
+            font-weight: bold;
+        }
+        .error-message {
+            color: #d32f2f;
+            text-align: center;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        .success-message {
+            color: #388e3c;
+            text-align: center;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        
+        .url-input-container {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .url-input-container input {
+            flex: 1;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .puzzle-stats {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        .puzzle-stats div {
+            margin: 5px 0;
+        }
+        
+        @media (max-width: 900px) {
+            .main-container {
+                flex-direction: column;
+            }
+            .input-container {
+                flex: 1;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="game-container">
+            <h1>Sudoku Game</h1>
+            <div class="status" id="status">Enter or generate a puzzle to start!</div>
+            <div class="sudoku-grid" id="grid"></div>
+            <div class="number-buttons">
+                <button class="number-btn" onclick="placeNumber(1)">1</button>
+                <button class="number-btn" onclick="placeNumber(2)">2</button>
+                <button class="number-btn" onclick="placeNumber(3)">3</button>
+                <button class="number-btn" onclick="placeNumber(4)">4</button>
+                <button class="number-btn" onclick="placeNumber(5)">5</button>
+                <button class="number-btn" onclick="placeNumber(6)">6</button>
+                <button class="number-btn" onclick="placeNumber(7)">7</button>
+                <button class="number-btn" onclick="placeNumber(8)">8</button>
+                <button class="number-btn" onclick="placeNumber(9)">9</button>
+                <button class="number-btn" onclick="placeNumber(0)">⌫</button>
+            </div>
+            <div class="controls">
+                <button onclick="newGame()">Generate New</button>
+                <button onclick="clearPuzzle()">Clear Board</button>
+                <button onclick="checkSolution()">Check</button>
+                <button onclick="solvePuzzle()">Solve</button>
+                <button class="secondary" onclick="exportPuzzle()">Export</button>
+            </div>
+        </div>
+        
+        <div class="input-container">
+            <h2>Custom Puzzle Input</h2>
+            
+            <div class="tab-buttons">
+                <button class="tab-button active" onclick="switchTab('visual')">Visual Input</button>
+                <button class="tab-button" onclick="switchTab('text')">Text Input</button>
+                <button class="tab-button" onclick="switchTab('import')">Import/URL</button>
+            </div>
+            
+            <!-- Visual Input Tab -->
+            <div id="visual-tab" class="tab-content active">
+                <p style="text-align: center; color: #666; font-size: 14px;">
+                    Click cells to add numbers. Click again to remove.
+                </p>
+                <div class="input-grid" id="inputGrid"></div>
+                <div class="input-numbers">
+                    <button class="input-num-btn" onclick="setInputNumber(1)">1</button>
+                    <button class="input-num-btn" onclick="setInputNumber(2)">2</button>
+                    <button class="input-num-btn" onclick="setInputNumber(3)">3</button>
+                    <button class="input-num-btn" onclick="setInputNumber(4)">4</button>
+                    <button class="input-num-btn" onclick="setInputNumber(5)">5</button>
+                    <button class="input-num-btn" onclick="setInputNumber(6)">6</button>
+                    <button class="input-num-btn" onclick="setInputNumber(7)">7</button>
+                    <button class="input-num-btn" onclick="setInputNumber(8)">8</button>
+                    <button class="input-num-btn" onclick="setInputNumber(9)">9</button>
+                    <button class="input-num-btn clear" onclick="setInputNumber(0)">⌫</button>
+                </div>
+                <div class="controls">
+                    <button class="success" onclick="loadVisualPuzzle()">Load Puzzle</button>
+                    <button class="secondary" onclick="clearInputGrid()">Clear Input</button>
+                </div>
+            </div>
+            
+            <!-- Text Input Tab -->
+            <div id="text-tab" class="tab-content">
+                <textarea id="textInput" placeholder="Paste your Sudoku puzzle here..."></textarea>
+                <div class="format-examples">
+                    <h4>Supported Formats:</h4>
+                    <pre>Grid (dots or zeros for empty):
+5.3...7..
+6..195...
+.98....6.
+8...6...3
+4..8.3..1
+7...2...6
+.6....28.
+...419..5
+....8..79</pre>
+                    <pre>Single Line:
+530000700600195000098000060...</pre>
+                    <pre>With separators:
+5 3 . | . . . | 7 . .
+6 . . | 1 9 5 | . . .
+. 9 8 | . . . | . 6 .</pre>
+                </div>
+                <div class="controls">
+                    <button class="success" onclick="loadTextPuzzle()">Load Puzzle</button>
+                    <button class="secondary" onclick="document.getElementById('textInput').value = ''">Clear</button>
+                </div>
+                <div id="textError" class="error-message"></div>
+            </div>
+            
+            <!-- Import/URL Tab -->
+            <div id="import-tab" class="tab-content">
+                <h4 style="margin-top: 0;">Import from URL</h4>
+                <div class="url-input-container">
+                    <input type="text" id="urlInput" placeholder="https://example.com/puzzle.txt">
+                    <button onclick="loadFromURL()">Load</button>
+                </div>
+                
+                <h4>Or paste a puzzle code</h4>
+                <input type="text" id="codeInput" placeholder="Puzzle code..." style="width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: 5px;">
+                <div class="controls">
+                    <button class="success" onclick="loadFromCode()">Load Code</button>
+                </div>
+                
+                <div class="puzzle-stats" id="puzzleStats" style="display: none;">
+                    <h4 style="margin: 0 0 10px 0;">Current Puzzle Info:</h4>
+                    <div>Clues: <strong id="clueCount">0</strong></div>
+                    <div>Empty Cells: <strong id="emptyCount">0</strong></div>
+                    <div>Difficulty: <strong id="difficulty">Unknown</strong></div>
+                </div>
+                
+                <div id="importError" class="error-message"></div>
+                <div id="importSuccess" class="success-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let grid = [];
+        let solution = [];
+        let selectedCell = null;
+        let inputGrid = [];
+        let selectedInputCell = null;
+        let currentInputNumber = null;
+        let currentTab = 'visual';
+
+        // Initialize empty grids
+        function initGrids() {
+            // Main game grid
+            const gridElement = document.getElementById('grid');
+            gridElement.innerHTML = '';
+            grid = Array(9).fill(null).map(() => Array(9).fill(0));
+            
+            for (let i = 0; i < 81; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.index = i;
+                cell.addEventListener('click', selectCell);
+                gridElement.appendChild(cell);
+            }
+            
+            // Input grid for visual input
+            const inputGridElement = document.getElementById('inputGrid');
+            inputGridElement.innerHTML = '';
+            inputGrid = Array(9).fill(null).map(() => Array(9).fill(0));
+            
+            for (let i = 0; i < 81; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'input-cell';
+                cell.dataset.index = i;
+                cell.addEventListener('click', clickInputCell);
+                inputGridElement.appendChild(cell);
+            }
+        }
+
+        // Tab switching
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            document.querySelector(`.tab-button:nth-child(${tab === 'visual' ? 1 : tab === 'text' ? 2 : 3})`).classList.add('active');
+            document.getElementById(`${tab}-tab`).classList.add('active');
+        }
+
+        // Visual input functions
+        function clickInputCell(e) {
+            const index = parseInt(e.target.dataset.index);
+            const row = Math.floor(index / 9);
+            const col = index % 9;
+            
+            if (selectedInputCell) {
+                selectedInputCell.style.outline = 'none';
+            }
+            
+            selectedInputCell = e.target;
+            selectedInputCell.style.outline = '2px solid #1976D2';
+            
+            // If a number was pre-selected, place it
+            if (currentInputNumber !== null) {
+                if (currentInputNumber === 0) {
+                    inputGrid[row][col] = 0;
+                    e.target.textContent = '';
+                    e.target.classList.remove('filled');
+                } else {
+                    inputGrid[row][col] = currentInputNumber;
+                    e.target.textContent = currentInputNumber;
+                    e.target.classList.add('filled');
+                }
+            } else {
+                // Toggle cell: if filled, clear it; if empty, waiting for number
+                if (inputGrid[row][col] !== 0) {
+                    inputGrid[row][col] = 0;
+                    e.target.textContent = '';
+                    e.target.classList.remove('filled');
+                }
+            }
+        }
+
+        function setInputNumber(num) {
+            currentInputNumber = num;
+            
+            // Visual feedback - highlight selected number button
+            document.querySelectorAll('.input-num-btn').forEach(btn => {
+                btn.style.outline = 'none';
+            });
+            if (num !== null) {
+                event.target.style.outline = '2px solid #1976D2';
+            }
+            
+            // If a cell is selected, place the number
+            if (selectedInputCell) {
+                const index = parseInt(selectedInputCell.dataset.index);
+                const row = Math.floor(index / 9);
+                const col = index % 9;
+                
+                if (num === 0) {
+                    inputGrid[row][col] = 0;
+                    selectedInputCell.textContent = '';
+                    selectedInputCell.classList.remove('filled');
+                } else {
+                    inputGrid[row][col] = num;
+                    selectedInputCell.textContent = num;
+                    selectedInputCell.classList.add('filled');
+                }
+            }
+        }
+
+        function clearInputGrid() {
+            inputGrid = Array(9).fill(null).map(() => Array(9).fill(0));
+            document.querySelectorAll('.input-cell').forEach(cell => {
+                cell.textContent = '';
+                cell.classList.remove('filled');
+            });
+        }
+
+        function loadVisualPuzzle() {
+            // Validate the puzzle has at least 17 clues
+            let clueCount = 0;
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (inputGrid[r][c] !== 0) clueCount++;
+                }
+            }
+            
+            if (clueCount < 17) {
+                alert('A valid Sudoku puzzle needs at least 17 clues. You have ' + clueCount);
+                return;
+            }
+            
+            // Load the puzzle
+            loadPuzzle(inputGrid);
+        }
+
+        // Text input parsing functions
+        function parseTextPuzzle(text) {
+            // Remove all whitespace and common separators
+            text = text.trim().replace(/[\s\|\-\+\r\n]/g, '');
+            
+            // Convert common empty cell representations to 0
+            text = text.replace(/[\.\_\*x]/gi, '0');
+            
+            // Check if we have exactly 81 digits
+            if (!/^[0-9]{81}$/.test(text)) {
+                // Try to extract 81 digits from multiline format
+                const lines = text.split('\n').filter(line => line.trim());
+                let digits = '';
+                
+                for (let line of lines) {
+                    const lineDigits = line.match(/[0-9\.\_\*x]/gi);
+                    if (lineDigits) {
+                        digits += lineDigits.join('').replace(/[\.\_\*x]/gi, '0');
+                    }
+                }
+                
+                if (digits.length !== 81) {
+                    throw new Error(`Invalid puzzle format. Expected 81 cells, found ${digits.length}`);
+                }
+                text = digits;
+            }
+            
+            // Convert to 2D array
+            const puzzle = [];
+            for (let i = 0; i < 9; i++) {
+                puzzle[i] = [];
+                for (let j = 0; j < 9; j++) {
+                    puzzle[i][j] = parseInt(text[i * 9 + j]);
+                }
+            }
+            
+            return puzzle;
+        }
+
+        function loadTextPuzzle() {
+            const textInput = document.getElementById('textInput').value;
+            const errorDiv = document.getElementById('textError');
+            errorDiv.textContent = '';
+            
+            if (!textInput.trim()) {
+                errorDiv.textContent = 'Please enter a puzzle';
+                return;
+            }
+            
+            try {
+                const puzzle = parseTextPuzzle(textInput);
+                
+                // Validate clue count
+                let clueCount = 0;
+                for (let r = 0; r < 9; r++) {
+                    for (let c = 0; c < 9; c++) {
+                        if (puzzle[r][c] !== 0) clueCount++;
+                    }
+                }
+                
+                if (clueCount < 17) {
+                    errorDiv.textContent = `Invalid puzzle: needs at least 17 clues, found ${clueCount}`;
+                    return;
+                }
+                
+                loadPuzzle(puzzle);
+                errorDiv.textContent = '';
+                document.getElementById('textInput').value = '';
+            } catch (error) {
+                errorDiv.textContent = error.message;
+            }
+        }
+
+        // Import functions
+        async function loadFromURL() {
+            const url = document.getElementById('urlInput').value.trim();
+            const errorDiv = document.getElementById('importError');
+            const successDiv = document.getElementById('importSuccess');
+            
+            errorDiv.textContent = '';
+            successDiv.textContent = '';
+            
+            if (!url) {
+                errorDiv.textContent = 'Please enter a URL';
+                return;
+            }
+            
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch puzzle');
+                }
+                
+                const text = await response.text();
+                const puzzle = parseTextPuzzle(text);
+                loadPuzzle(puzzle);
+                
+                successDiv.textContent = 'Puzzle loaded successfully!';
+                document.getElementById('urlInput').value = '';
+            } catch (error) {
+                errorDiv.textContent = 'Error loading puzzle: ' + error.message;
+            }
+        }
+
+        function loadFromCode() {
+            const code = document.getElementById('codeInput').value.trim();
+            const errorDiv = document.getElementById('importError');
+            const successDiv = document.getElementById('importSuccess');
+            
+            errorDiv.textContent = '';
+            successDiv.textContent = '';
+            
+            if (!code) {
+                errorDiv.textContent = 'Please enter a puzzle code';
+                return;
+            }
+            
+            try {
+                // Decode from base64 or compressed format
+                let puzzleString = code;
+                
+                // If it looks like base64, decode it
+                if (/^[A-Za-z0-9+/]+=*$/.test(code) && code.length > 50) {
+                    puzzleString = atob(code);
+                }
+                
+                const puzzle = parseTextPuzzle(puzzleString);
+                loadPuzzle(puzzle);
+                
+                successDiv.textContent = 'Puzzle loaded successfully!';
+                document.getElementById('codeInput').value = '';
+            } catch (error) {
+                errorDiv.textContent = 'Invalid puzzle code';
+            }
+        }
+
+        // Load puzzle into main game
+        function loadPuzzle(puzzle) {
+            grid = puzzle.map(row => [...row]);
+            solution = null; // We don't have the solution for custom puzzles
+            
+            displayGrid();
+            updatePuzzleStats();
+            document.getElementById('status').textContent = 'Custom puzzle loaded. Good luck!';
+            
+            // Show puzzle stats
+            document.getElementById('puzzleStats').style.display = 'block';
+        }
+
+        function updatePuzzleStats() {
+            let clueCount = 0;
+            let emptyCount = 0;
+            
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (grid[r][c] !== 0) {
+                        clueCount++;
+                    } else {
+                        emptyCount++;
+                    }
+                }
+            }
+            
+            document.getElementById('clueCount').textContent = clueCount;
+            document.getElementById('emptyCount').textContent = emptyCount;
+            
+            // Estimate difficulty
+            let difficulty = 'Unknown';
+            if (clueCount >= 46) difficulty = 'Very Easy';
+            else if (clueCount >= 36) difficulty = 'Easy';
+            else if (clueCount >= 32) difficulty = 'Medium';
+            else if (clueCount >= 28) difficulty = 'Hard';
+            else if (clueCount >= 22) difficulty = 'Expert';
+            else difficulty = 'Extreme';
+            
+            document.getElementById('difficulty').textContent = difficulty;
+        }
+
+        // Export function
+        function exportPuzzle() {
+            let puzzleString = '';
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    puzzleString += grid[r][c] || '.';
+                }
+                if (r < 8) puzzleString += '\n';
+            }
+            
+            // Create multiple export formats
+            const formats = [
+                { name: 'Grid Format', content: puzzleString },
+                { name: 'Single Line', content: puzzleString.replace(/[\n\.]/g, '0').replace(/\./g, '0') },
+                { name: 'Code', content: btoa(puzzleString.replace(/\n/g, '')) },
+                { name: 'URL', content: `${window.location.origin}${window.location.pathname}?puzzle=${btoa(puzzleString.replace(/\n/g, ''))}` }
+            ];
+            
+            let exportText = 'Sudoku Puzzle Export\n';
+            exportText += '===================\n\n';
+            
+            formats.forEach(format => {
+                exportText += `${format.name}:\n${format.content}\n\n`;
+            });
+            
+            // Copy to clipboard and show alert
+            navigator.clipboard.writeText(exportText).then(() => {
+                alert('Puzzle exported to clipboard in multiple formats!');
+            }).catch(() => {
+                // Fallback: show in prompt
+                prompt('Copy this puzzle:', exportText);
+            });
+        }
+
+        // Game logic functions
+        function selectCell(e) {
+            if (selectedCell) {
+                selectedCell.classList.remove('selected');
+            }
+            selectedCell = e.target;
+            selectedCell.classList.add('selected');
+        }
+
+        function placeNumber(num) {
+            if (!selectedCell || selectedCell.classList.contains('fixed')) return;
+            
+            const index = parseInt(selectedCell.dataset.index);
+            const row = Math.floor(index / 9);
+            const col = index % 9;
+            
+            if (num === 0) {
+                grid[row][col] = 0;
+                selectedCell.textContent = '';
+                selectedCell.classList.remove('error');
+            } else {
+                grid[row][col] = num;
+                selectedCell.textContent = num;
+                
+                // Check validity
+                if (!isValidPlacement(row, col, num)) {
+                    selectedCell.classList.add('error');
+                } else {
+                    selectedCell.classList.remove('error');
+                }
+            }
+            
+            checkCompletion();
+        }
+
+        function isValidPlacement(row, col, num) {
+            // Temporarily remove the number to check
+            const temp = grid[row][col];
+            grid[row][col] = 0;
+            
+            // Check row
+            for (let c = 0; c < 9; c++) {
+                if (grid[row][c] === num) {
+                    grid[row][col] = temp;
+                    return false;
+                }
+            }
+            
+            // Check column
+            for (let r = 0; r < 9; r++) {
+                if (grid[r][col] === num) {
+                    grid[row][col] = temp;
+                    return false;
+                }
+            }
+            
+            // Check 3x3 box
+            const boxRow = Math.floor(row / 3) * 3;
+            const boxCol = Math.floor(col / 3) * 3;
+            for (let r = boxRow; r < boxRow + 3; r++) {
+                for (let c = boxCol; c < boxCol + 3; c++) {
+                    if (grid[r][c] === num) {
+                        grid[row][col] = temp;
+                        return false;
+                    }
+                }
+            }
+            
+            grid[row][col] = temp;
+            return true;
+        }
+
+        function displayGrid() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach((cell, index) => {
+                const row = Math.floor(index / 9);
+                const col = index % 9;
+                const value = grid[row][col];
+                
+                cell.textContent = value || '';
+                cell.classList.remove('fixed', 'error', 'selected');
+                
+                if (value) {
+                    cell.classList.add('fixed');
+                }
+            });
+        }
+
+        function checkCompletion() {
+            // Check if puzzle is complete and valid
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (grid[r][c] === 0) return;
+                    if (!isValidPlacement(r, c, grid[r][c])) return;
+                }
+            }
+            
+            document.getElementById('status').innerHTML = '<span class="complete">Congratulations! Puzzle solved!</span>';
+        }
+
+        function checkSolution() {
+            let errors = 0;
+            const cells = document.querySelectorAll('.cell');
+            
+            cells.forEach((cell, index) => {
+                const row = Math.floor(index / 9);
+                const col = index % 9;
+                
+                if (grid[row][col] && !isValidPlacement(row, col, grid[row][col])) {
+                    cell.classList.add('error');
+                    errors++;
+                } else {
+                    cell.classList.remove('error');
+                }
+            });
+            
+            document.getElementById('status').textContent = errors ? `${errors} errors found` : 'Looking good!';
+        }
+
+        function clearPuzzle() {
+            grid = Array(9).fill(null).map(() => Array(9).fill(0));
+            displayGrid();
+            document.getElementById('status').textContent = 'Board cleared';
+            document.getElementById('puzzleStats').style.display = 'none';
+        }
+
+        // Sudoku solver
+        function solvePuzzle() {
+            const solved = solveSudoku(grid.map(row => [...row]));
+            if (solved) {
+                grid = solved;
+                displayGrid();
+                document.getElementById('status').textContent = 'Puzzle solved!';
+            } else {
+                document.getElementById('status').textContent = 'No solution exists for this puzzle';
+            }
+        }
+
+        function solveSudoku(board) {
+            function isValid(board, row, col, num) {
+                for (let x = 0; x < 9; x++) {
+                    if (board[row][x] === num) return false;
+                }
+                
+                for (let x = 0; x < 9; x++) {
+                    if (board[x][col] === num) return false;
+                }
+                
+                const boxRow = Math.floor(row / 3) * 3;
+                const boxCol = Math.floor(col / 3) * 3;
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        if (board[boxRow + i][boxCol + j] === num) return false;
+                    }
+                }
+                
+                return true;
+            }
+            
+            function solve(board) {
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        if (board[row][col] === 0) {
+                            for (let num = 1; num <= 9; num++) {
+                                if (isValid(board, row, col, num)) {
+                                    board[row][col] = num;
+                                    if (solve(board)) return true;
+                                    board[row][col] = 0;
+                                }
+                            }
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+            
+            if (solve(board)) {
+                return board;
+            }
+            return null;
+        }
+
+        // Generate new puzzle
+        function newGame() {
+            // Simple puzzle generation
+            const newPuzzle = generateSudokuPuzzle();
+            grid = newPuzzle.puzzle;
+            solution = newPuzzle.solution;
+            displayGrid();
+            updatePuzzleStats();
+            document.getElementById('status').textContent = 'New puzzle generated!';
+            document.getElementById('puzzleStats').style.display = 'block';
+        }
+
+        function generateSudokuPuzzle() {
+            // Generate complete solution
+            const solution = Array(9).fill(null).map(() => Array(9).fill(0));
+            
+            function fillGrid(grid) {
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        if (grid[row][col] === 0) {
+                            const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9].sort(() => Math.random() - 0.5);
+                            for (let num of numbers) {
+                                if (isValidForSolution(grid, row, col, num)) {
+                                    grid[row][col] = num;
+                                    if (fillGrid(grid)) return true;
+                                    grid[row][col] = 0;
+                                }
+                            }
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+            
+            function isValidForSolution(grid, row, col, num) {
+                for (let x = 0; x < 9; x++) {
+                    if (grid[row][x] === num) return false;
+                }
+                for (let x = 0; x < 9; x++) {
+                    if (grid[x][col] === num) return false;
+                }
+                const boxRow = Math.floor(row / 3) * 3;
+                const boxCol = Math.floor(col / 3) * 3;
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        if (grid[boxRow + i][boxCol + j] === num) return false;
+                    }
+                }
+                return true;
+            }
+            
+            fillGrid(solution);
+            
+            // Create puzzle by removing numbers
+            const puzzle = solution.map(row => [...row]);
+            const cellsToRemove = 45; // Medium difficulty
+            
+            let removed = 0;
+            while (removed < cellsToRemove) {
+                const row = Math.floor(Math.random() * 9);
+                const col = Math.floor(Math.random() * 9);
+                if (puzzle[row][col] !== 0) {
+                    puzzle[row][col] = 0;
+                    removed++;
+                }
+            }
+            
+            return { puzzle, solution };
+        }
+
+        // Check URL parameters on load
+        function checkURLParams() {
+            const params = new URLSearchParams(window.location.search);
+            const puzzleCode = params.get('puzzle');
+            
+            if (puzzleCode) {
+                try {
+                    const puzzleString = atob(puzzleCode);
+                    const puzzle = parseTextPuzzle(puzzleString);
+                    loadPuzzle(puzzle);
+                } catch (error) {
+                    console.error('Failed to load puzzle from URL:', error);
+                }
+            }
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (!selectedCell || selectedCell.classList.contains('fixed')) return;
+            
+            const key = e.key;
+            if (key >= '1' && key <= '9') {
+                placeNumber(parseInt(key));
+            } else if (key === '0' || key === 'Delete' || key === 'Backspace') {
+                placeNumber(0);
+            }
+        });
+
+        // Initialize on load
+        initGrids();
+        checkURLParams();
+    </script>
+</body>
+</html>

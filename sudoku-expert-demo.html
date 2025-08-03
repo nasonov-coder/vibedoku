@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expert Sudoku Generator Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #1976D2;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .info {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .stat {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        .sudoku-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 50px);
+            grid-template-rows: repeat(9, 50px);
+            gap: 1px;
+            background-color: #333;
+            padding: 3px;
+            margin: 20px auto;
+            width: fit-content;
+        }
+        .cell {
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .cell.given {
+            color: #333;
+            background-color: #f0f0f0;
+        }
+        .cell:nth-child(3n) {
+            border-right: 3px solid #333;
+        }
+        .cell:nth-child(n+19):nth-child(-n+27),
+        .cell:nth-child(n+46):nth-child(-n+54),
+        .cell:nth-child(n+73):nth-child(-n+81) {
+            border-bottom: 3px solid #333;
+        }
+        .techniques {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .technique-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .technique {
+            background: #e3f2fd;
+            color: #1976D2;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+        .rating {
+            font-size: 20px;
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        .rating.Diabolical { background: #d32f2f; color: white; }
+        .rating.Fiendish { background: #f57c00; color: white; }
+        .rating.Expert { background: #fbc02d; color: #333; }
+        .rating.Hard { background: #689f38; color: white; }
+        .rating.Medium { background: #388e3c; color: white; }
+        .rating.Easy { background: #1976d2; color: white; }
+        
+        /* Interactive game styles */
+        .game-controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 20px 0;
+            text-align: center;
+        }
+        .number-buttons {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        .number-btn {
+            width: 45px;
+            height: 45px;
+            padding: 0;
+            font-size: 20px;
+            background: #e3f2fd;
+            color: #1976D2;
+            transition: all 0.2s;
+        }
+        .number-btn:hover {
+            background: #1976D2;
+            color: white;
+            transform: scale(1.05);
+        }
+        .number-btn.clear {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+        .number-btn.clear:hover {
+            background: #d32f2f;
+            color: white;
+        }
+        .cell.selected {
+            background-color: #bbdefb !important;
+            outline: 2px solid #1976D2;
+            outline-offset: -2px;
+        }
+        .cell.user-input {
+            color: #1976D2;
+            background-color: white;
+        }
+        .cell.error {
+            color: #d32f2f !important;
+            background-color: #ffebee !important;
+        }
+        .cell.highlight {
+            background-color: #e3f2fd;
+        }
+        .cell:hover:not(.given) {
+            background-color: #f0f0f0;
+            cursor: pointer;
+        }
+        .timer {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin: 15px 0;
+        }
+        .mistakes {
+            color: #d32f2f;
+            font-weight: bold;
+        }
+        .hint-btn {
+            background: #ff9800;
+        }
+        .hint-btn:hover {
+            background: #f57c00;
+        }
+        .hint-btn:disabled {
+            background: #ccc;
+        }
+        .notes-mode {
+            background: #9c27b0;
+        }
+        .notes-mode:hover {
+            background: #7b1fa2;
+        }
+        .notes-mode.active {
+            background: #4a148c;
+        }
+        .cell.notes {
+            font-size: 10px !important;
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            padding: 2px;
+            align-items: center;
+            justify-items: center;
+        }
+        .cell:not(.notes) {
+            font-size: 20px;
+            display: flex;
+        }
+        .game-status {
+            margin-top: 15px;
+            font-size: 18px;
+        }
+        .complete {
+            color: #388e3c;
+            font-weight: bold;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .keyboard-hint {
+            font-size: 14px;
+            color: #666;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Expert Sudoku Generator</h1>
+    
+    <div class="controls">
+        <button id="generateBtn" onclick="generatePuzzle()">Generate Expert Puzzle</button>
+        <button id="showSolutionBtn" onclick="showSolution()" disabled>Show Solution</button>
+        <span id="status"></span>
+    </div>
+
+    <div class="info" id="info" style="display: none;">
+        <h3>Puzzle Analysis</h3>
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-label">Clue Count</div>
+                <div class="stat-value" id="clueCount">-</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Difficulty Score</div>
+                <div class="stat-value" id="difficultyScore">-</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Empty Cells</div>
+                <div class="stat-value" id="emptyCells">-</div>
+            </div>
+        </div>
+        <div class="rating" id="rating"></div>
+    </div>
+
+    <div id="gridContainer"></div>
+
+    <div class="game-controls" id="gameControls" style="display: none;">
+        <div class="timer" id="timer">Time: 00:00</div>
+        <div class="number-buttons">
+            <button class="number-btn" onclick="placeNumber(1)">1</button>
+            <button class="number-btn" onclick="placeNumber(2)">2</button>
+            <button class="number-btn" onclick="placeNumber(3)">3</button>
+            <button class="number-btn" onclick="placeNumber(4)">4</button>
+            <button class="number-btn" onclick="placeNumber(5)">5</button>
+            <button class="number-btn" onclick="placeNumber(6)">6</button>
+            <button class="number-btn" onclick="placeNumber(7)">7</button>
+            <button class="number-btn" onclick="placeNumber(8)">8</button>
+            <button class="number-btn" onclick="placeNumber(9)">9</button>
+            <button class="number-btn clear" onclick="placeNumber(0)">⌫</button>
+        </div>
+        <div>
+            <button class="hint-btn" onclick="useHint()" id="hintBtn">Hint (3)</button>
+            <button class="notes-mode" onclick="toggleNotes()" id="notesBtn">Notes Mode</button>
+            <button onclick="checkProgress()">Check Progress</button>
+            <button onclick="undoMove()">Undo</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <button onclick="toggleAutoNotes()" id="autoNotesBtn" style="background: #4caf50;">Auto-Notes: OFF</button>
+            <button onclick="toggleAutoFill()" id="autoFillBtn" style="background: #ff5722;">Auto-Fill Singles: OFF</button>
+        </div>
+        <div class="game-status" id="gameStatus">
+            Mistakes: <span class="mistakes" id="mistakes">0</span> / 3
+        </div>
+        <div class="keyboard-hint">Keyboard: 1-9 to place, 0/Delete to clear, N for notes, A for auto-notes, F for auto-fill, H for hint, U to undo</div>
+    </div>
+
+    <div class="techniques" id="techniques" style="display: none;">
+        <h3>Required Solving Techniques</h3>
+        <div class="technique-list" id="techniqueList"></div>
+    </div>
+
+    <script src="sudoku-expert-generator.js"></script>
+    <script>
+        let currentPuzzle = null;
+        let currentSolution = null;
+        let generator = new ExpertSudokuGenerator();
+        let selectedCell = null;
+        let gameGrid = [];
+        let mistakes = 0;
+        let hints = 3;
+        let notesMode = false;
+        let moveHistory = [];
+        let startTime = null;
+        let timerInterval = null;
+        let isComplete = false;
+        let autoNotesMode = false;
+        let autoFillSingles = false;
+
+        function generatePuzzle() {
+            const btn = document.getElementById('generateBtn');
+            const status = document.getElementById('status');
+            const showBtn = document.getElementById('showSolutionBtn');
+            
+            btn.disabled = true;
+            showBtn.disabled = true;
+            status.innerHTML = '<span class="loading">Generating expert puzzle... This may take a moment.</span>';
+            
+            // Use setTimeout to allow UI to update
+            setTimeout(() => {
+                try {
+                    const result = generator.generateExpertPuzzle();
+                    currentPuzzle = result.puzzle;
+                    currentSolution = result.solution;
+                    
+                    displayPuzzle(currentPuzzle);
+                    displayAnalysis(result.difficulty);
+                    
+                    btn.disabled = false;
+                    showBtn.disabled = false;
+                    status.textContent = '';
+                } catch (error) {
+                    console.error('Error generating puzzle:', error);
+                    status.innerHTML = '<span style="color: red;">Error generating puzzle. Please try again.</span>';
+                    btn.disabled = false;
+                }
+            }, 100);
+        }
+
+        function displayPuzzle(puzzle, interactive = true) {
+            const container = document.getElementById('gridContainer');
+            container.innerHTML = '<div class="sudoku-grid" id="grid"></div>';
+            const grid = document.getElementById('grid');
+            
+            // Initialize game grid
+            gameGrid = puzzle.map(row => row.map(val => ({
+                value: val,
+                given: val !== 0,
+                notes: new Set(),
+                error: false
+            })));
+            
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    
+                    if (puzzle[r][c] !== 0) {
+                        cell.textContent = puzzle[r][c];
+                        cell.classList.add('given');
+                    }
+                    
+                    if (interactive && puzzle[r][c] === 0) {
+                        cell.addEventListener('click', selectCell);
+                    }
+                    
+                    grid.appendChild(cell);
+                }
+            }
+            
+            if (interactive) {
+                document.getElementById('gameControls').style.display = 'block';
+                startGame();
+            }
+        }
+
+        function startGame() {
+            mistakes = 0;
+            hints = 3;
+            notesMode = false;
+            moveHistory = [];
+            isComplete = false;
+            selectedCell = null;
+            
+            document.getElementById('mistakes').textContent = mistakes;
+            document.getElementById('hintBtn').textContent = `Hint (${hints})`;
+            document.getElementById('hintBtn').disabled = false;
+            document.getElementById('notesBtn').classList.remove('active');
+            
+            // Start timer
+            startTime = Date.now();
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(updateTimer, 1000);
+            updateTimer();
+            
+            // Initialize auto-notes if enabled
+            if (autoNotesMode) {
+                initializeAutoNotes();
+            }
+        }
+
+        function updateTimer() {
+            if (isComplete) return;
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            document.getElementById('timer').textContent = 
+                `Time: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function selectCell(e) {
+            if (isComplete) return;
+            
+            // Remove previous selection
+            if (selectedCell) {
+                selectedCell.classList.remove('selected');
+                clearHighlights();
+            }
+            
+            selectedCell = e.target;
+            selectedCell.classList.add('selected');
+            
+            const row = parseInt(selectedCell.dataset.row);
+            const col = parseInt(selectedCell.dataset.col);
+            
+            // Highlight related cells
+            highlightRelated(row, col);
+        }
+
+        function highlightRelated(row, col) {
+            const cells = document.querySelectorAll('.cell');
+            const value = gameGrid[row][col].value;
+            
+            cells.forEach(cell => {
+                const r = parseInt(cell.dataset.row);
+                const c = parseInt(cell.dataset.col);
+                
+                // Highlight same row, column, or box
+                if (r === row || c === col || 
+                    (Math.floor(r/3) === Math.floor(row/3) && 
+                     Math.floor(c/3) === Math.floor(col/3))) {
+                    cell.classList.add('highlight');
+                }
+                
+                // Highlight same number
+                if (value && gameGrid[r][c].value === value) {
+                    cell.classList.add('highlight');
+                }
+            });
+        }
+
+        function clearHighlights() {
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.classList.remove('highlight');
+            });
+        }
+
+        function placeNumber(num) {
+            if (!selectedCell || isComplete) return;
+            
+            const row = parseInt(selectedCell.dataset.row);
+            const col = parseInt(selectedCell.dataset.col);
+            
+            if (gameGrid[row][col].given) return;
+            
+            // Save move for undo
+            moveHistory.push({
+                row, col,
+                oldValue: gameGrid[row][col].value,
+                oldNotes: new Set(gameGrid[row][col].notes)
+            });
+            
+            if (notesMode && num !== 0) {
+                // Toggle note
+                if (gameGrid[row][col].notes.has(num)) {
+                    gameGrid[row][col].notes.delete(num);
+                } else {
+                    gameGrid[row][col].notes.add(num);
+                }
+                gameGrid[row][col].value = 0;
+                updateCellDisplay(selectedCell, row, col);
+            } else {
+                // Place number
+                gameGrid[row][col].value = num;
+                gameGrid[row][col].notes.clear();
+                
+                if (num === 0) {
+                    selectedCell.textContent = '';
+                    selectedCell.classList.remove('error', 'user-input');
+                    // Clear was placed, restore auto-notes if enabled
+                    restoreAutoNotes(row, col);
+                } else {
+                    selectedCell.textContent = num;
+                    selectedCell.classList.add('user-input');
+                    
+                    // Check if correct
+                    if (currentSolution[row][col] !== num) {
+                        selectedCell.classList.add('error');
+                        gameGrid[row][col].error = true;
+                        mistakes++;
+                        document.getElementById('mistakes').textContent = mistakes;
+                        
+                        if (mistakes >= 3) {
+                            endGame(false);
+                        }
+                    } else {
+                        selectedCell.classList.remove('error');
+                        gameGrid[row][col].error = false;
+                        updateAutoNotes(row, col, num);
+                        checkCompletion();
+                    }
+                }
+                
+                updateCellDisplay(selectedCell, row, col);
+                highlightRelated(row, col);
+            }
+        }
+
+        function updateCellDisplay(cell, row, col) {
+            const data = gameGrid[row][col];
+            
+            if (data.notes.size > 0) {
+                cell.innerHTML = '';
+                cell.classList.add('notes');
+                cell.classList.remove('error', 'user-input');
+                for (let i = 1; i <= 9; i++) {
+                    const noteDiv = document.createElement('div');
+                    noteDiv.textContent = data.notes.has(i) ? i : '';
+                    cell.appendChild(noteDiv);
+                }
+            } else {
+                cell.classList.remove('notes');
+                cell.innerHTML = '';
+                cell.textContent = data.value || '';
+                if (data.value && !data.given) {
+                    cell.classList.add('user-input');
+                    if (data.error) {
+                        cell.classList.add('error');
+                    }
+                }
+            }
+        }
+
+        function toggleNotes() {
+            notesMode = !notesMode;
+            const btn = document.getElementById('notesBtn');
+            if (notesMode) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+
+        function useHint() {
+            if (!selectedCell || hints <= 0 || isComplete) return;
+            
+            const row = parseInt(selectedCell.dataset.row);
+            const col = parseInt(selectedCell.dataset.col);
+            
+            if (gameGrid[row][col].given) return;
+            
+            hints--;
+            document.getElementById('hintBtn').textContent = `Hint (${hints})`;
+            if (hints === 0) {
+                document.getElementById('hintBtn').disabled = true;
+            }
+            
+            gameGrid[row][col].value = currentSolution[row][col];
+            gameGrid[row][col].notes.clear();
+            gameGrid[row][col].error = false;
+            
+            selectedCell.textContent = currentSolution[row][col];
+            selectedCell.classList.add('given');
+            selectedCell.classList.remove('error', 'user-input', 'notes');
+            
+            checkCompletion();
+        }
+
+        function checkProgress() {
+            let errors = 0;
+            const cells = document.querySelectorAll('.cell');
+            
+            cells.forEach(cell => {
+                const row = parseInt(cell.dataset.row);
+                const col = parseInt(cell.dataset.col);
+                
+                if (gameGrid[row][col].value && 
+                    gameGrid[row][col].value !== currentSolution[row][col]) {
+                    cell.classList.add('error');
+                    errors++;
+                } else {
+                    cell.classList.remove('error');
+                }
+            });
+            
+            alert(errors ? `${errors} errors found` : 'Looking good so far!');
+        }
+
+        function undoMove() {
+            if (moveHistory.length === 0 || isComplete) return;
+            
+            const move = moveHistory.pop();
+            const previousValue = gameGrid[move.row][move.col].value;
+            
+            gameGrid[move.row][move.col].value = move.oldValue;
+            gameGrid[move.row][move.col].notes = move.oldNotes;
+            
+            const cell = document.querySelector(`[data-row="${move.row}"][data-col="${move.col}"]`);
+            
+            if (move.autoFilled) {
+                cell.classList.remove('user-input', 'error');
+            }
+            
+            updateCellDisplay(cell, move.row, move.col);
+            
+            if (move.oldValue && currentSolution[move.row][move.col] !== move.oldValue) {
+                cell.classList.add('error');
+                gameGrid[move.row][move.col].error = true;
+            } else {
+                cell.classList.remove('error');
+                gameGrid[move.row][move.col].error = false;
+            }
+            
+            // If we're undoing a number placement and auto-notes is on, restore notes
+            if (previousValue && move.oldValue === 0 && autoNotesMode) {
+                restoreAutoNotes(move.row, move.col);
+                
+                // Also restore notes for affected cells
+                for (let c = 0; c < 9; c++) {
+                    if (c !== move.col && gameGrid[move.row][c].value === 0) {
+                        restoreAutoNotes(move.row, c);
+                    }
+                }
+                for (let r = 0; r < 9; r++) {
+                    if (r !== move.row && gameGrid[r][move.col].value === 0) {
+                        restoreAutoNotes(r, move.col);
+                    }
+                }
+                const boxRow = Math.floor(move.row / 3) * 3;
+                const boxCol = Math.floor(move.col / 3) * 3;
+                for (let r = boxRow; r < boxRow + 3; r++) {
+                    for (let c = boxCol; c < boxCol + 3; c++) {
+                        if ((r !== move.row || c !== move.col) && gameGrid[r][c].value === 0) {
+                            restoreAutoNotes(r, c);
+                        }
+                    }
+                }
+            }
+        }
+
+        function checkCompletion() {
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (gameGrid[r][c].value !== currentSolution[r][c]) {
+                        return;
+                    }
+                }
+            }
+            
+            endGame(true);
+        }
+
+        function endGame(won) {
+            isComplete = true;
+            clearInterval(timerInterval);
+            
+            if (won) {
+                const time = document.getElementById('timer').textContent;
+                document.getElementById('gameStatus').innerHTML = 
+                    `<span class="complete">Congratulations! You solved it in ${time}!</span>`;
+            } else {
+                document.getElementById('gameStatus').innerHTML = 
+                    '<span class="mistakes">Game Over - Too many mistakes!</span>';
+            }
+        }
+
+        // Auto-notes functions
+        function toggleAutoNotes() {
+            autoNotesMode = !autoNotesMode;
+            const btn = document.getElementById('autoNotesBtn');
+            
+            if (autoNotesMode) {
+                btn.style.background = '#388e3c';
+                btn.textContent = 'Auto-Notes: ON';
+                initializeAutoNotes();
+            } else {
+                btn.style.background = '#4caf50';
+                btn.textContent = 'Auto-Notes: OFF';
+                // Clear all notes
+                for (let r = 0; r < 9; r++) {
+                    for (let c = 0; c < 9; c++) {
+                        if (!gameGrid[r][c].given && gameGrid[r][c].value === 0) {
+                            gameGrid[r][c].notes.clear();
+                            const cell = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+                            updateCellDisplay(cell, r, c);
+                        }
+                    }
+                }
+            }
+        }
+
+        function toggleAutoFill() {
+            autoFillSingles = !autoFillSingles;
+            const btn = document.getElementById('autoFillBtn');
+            
+            if (autoFillSingles) {
+                btn.style.background = '#d32f2f';
+                btn.textContent = 'Auto-Fill Singles: ON';
+                if (autoNotesMode) {
+                    checkAndFillSingles();
+                }
+            } else {
+                btn.style.background = '#ff5722';
+                btn.textContent = 'Auto-Fill Singles: OFF';
+            }
+        }
+
+        function initializeAutoNotes() {
+            // Add all possible notes to empty cells
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (!gameGrid[r][c].given && gameGrid[r][c].value === 0) {
+                        gameGrid[r][c].notes.clear();
+                        for (let num = 1; num <= 9; num++) {
+                            if (isValidPlacement(r, c, num)) {
+                                gameGrid[r][c].notes.add(num);
+                            }
+                        }
+                        const cell = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+                        updateCellDisplay(cell, r, c);
+                    }
+                }
+            }
+            
+            if (autoFillSingles) {
+                checkAndFillSingles();
+            }
+        }
+
+        function isValidPlacement(row, col, num) {
+            // Check row
+            for (let c = 0; c < 9; c++) {
+                if (gameGrid[row][c].value === num) return false;
+            }
+            
+            // Check column
+            for (let r = 0; r < 9; r++) {
+                if (gameGrid[r][col].value === num) return false;
+            }
+            
+            // Check 3x3 box
+            const boxRow = Math.floor(row / 3) * 3;
+            const boxCol = Math.floor(col / 3) * 3;
+            for (let r = boxRow; r < boxRow + 3; r++) {
+                for (let c = boxCol; c < boxCol + 3; c++) {
+                    if (gameGrid[r][c].value === num) return false;
+                }
+            }
+            
+            return true;
+        }
+
+        function updateAutoNotes(placedRow, placedCol, placedNum) {
+            if (!autoNotesMode) return;
+            
+            // Remove this number from notes in same row, column, and box
+            for (let c = 0; c < 9; c++) {
+                if (c !== placedCol && gameGrid[placedRow][c].notes.has(placedNum)) {
+                    gameGrid[placedRow][c].notes.delete(placedNum);
+                    const cell = document.querySelector(`[data-row="${placedRow}"][data-col="${c}"]`);
+                    updateCellDisplay(cell, placedRow, c);
+                }
+            }
+            
+            for (let r = 0; r < 9; r++) {
+                if (r !== placedRow && gameGrid[r][placedCol].notes.has(placedNum)) {
+                    gameGrid[r][placedCol].notes.delete(placedNum);
+                    const cell = document.querySelector(`[data-row="${r}"][data-col="${placedCol}"]`);
+                    updateCellDisplay(cell, r, placedCol);
+                }
+            }
+            
+            const boxRow = Math.floor(placedRow / 3) * 3;
+            const boxCol = Math.floor(placedCol / 3) * 3;
+            for (let r = boxRow; r < boxRow + 3; r++) {
+                for (let c = boxCol; c < boxCol + 3; c++) {
+                    if ((r !== placedRow || c !== placedCol) && gameGrid[r][c].notes.has(placedNum)) {
+                        gameGrid[r][c].notes.delete(placedNum);
+                        const cell = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+                        updateCellDisplay(cell, r, c);
+                    }
+                }
+            }
+            
+            if (autoFillSingles) {
+                setTimeout(() => checkAndFillSingles(), 100);
+            }
+        }
+
+        function restoreAutoNotes(row, col) {
+            if (!autoNotesMode) return;
+            
+            // Recalculate valid notes for this cell
+            gameGrid[row][col].notes.clear();
+            for (let num = 1; num <= 9; num++) {
+                if (isValidPlacement(row, col, num)) {
+                    gameGrid[row][col].notes.add(num);
+                }
+            }
+            
+            // Also recalculate notes for affected cells
+            const affectedCells = new Set();
+            
+            // Same row
+            for (let c = 0; c < 9; c++) {
+                if (c !== col && gameGrid[row][c].value === 0) {
+                    affectedCells.add(`${row},${c}`);
+                }
+            }
+            
+            // Same column
+            for (let r = 0; r < 9; r++) {
+                if (r !== row && gameGrid[r][col].value === 0) {
+                    affectedCells.add(`${r},${col}`);
+                }
+            }
+            
+            // Same box
+            const boxRow = Math.floor(row / 3) * 3;
+            const boxCol = Math.floor(col / 3) * 3;
+            for (let r = boxRow; r < boxRow + 3; r++) {
+                for (let c = boxCol; c < boxCol + 3; c++) {
+                    if ((r !== row || c !== col) && gameGrid[r][c].value === 0) {
+                        affectedCells.add(`${r},${c}`);
+                    }
+                }
+            }
+            
+            // Recalculate notes for affected cells
+            affectedCells.forEach(key => {
+                const [r, c] = key.split(',').map(Number);
+                gameGrid[r][c].notes.clear();
+                for (let num = 1; num <= 9; num++) {
+                    if (isValidPlacement(r, c, num)) {
+                        gameGrid[r][c].notes.add(num);
+                    }
+                }
+                const cell = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+                updateCellDisplay(cell, r, c);
+            });
+        }
+
+        function checkAndFillSingles() {
+            if (!autoFillSingles || !autoNotesMode) return;
+            
+            let filledAny = false;
+            
+            // Check for naked singles (cells with only one note)
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (gameGrid[r][c].value === 0 && gameGrid[r][c].notes.size === 1) {
+                        const num = Array.from(gameGrid[r][c].notes)[0];
+                        
+                        // Auto-fill this cell
+                        gameGrid[r][c].value = num;
+                        gameGrid[r][c].notes.clear();
+                        
+                        const cell = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+                        // Remove notes class and clear any child elements
+                        cell.classList.remove('notes');
+                        cell.innerHTML = '';
+                        cell.textContent = num;
+                        cell.classList.add('user-input');
+                        
+                        // Animate the auto-fill
+                        cell.style.animation = 'pulse 0.5s';
+                        setTimeout(() => {
+                            cell.style.animation = '';
+                        }, 500);
+                        
+                        // Check if correct
+                        if (currentSolution[r][c] !== num) {
+                            cell.classList.add('error');
+                            gameGrid[r][c].error = true;
+                            mistakes++;
+                            document.getElementById('mistakes').textContent = mistakes;
+                            
+                            if (mistakes >= 3) {
+                                endGame(false);
+                                return;
+                            }
+                        } else {
+                            cell.classList.remove('error');
+                            gameGrid[r][c].error = false;
+                        }
+                        
+                        updateAutoNotes(r, c, num);
+                        filledAny = true;
+                        
+                        // Save for undo
+                        moveHistory.push({
+                            row: r, col: c,
+                            oldValue: 0,
+                            oldNotes: new Set(),
+                            autoFilled: true
+                        });
+                    }
+                }
+            }
+            
+            if (filledAny) {
+                checkCompletion();
+                // Continue checking for more singles
+                setTimeout(() => checkAndFillSingles(), 300);
+            }
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (!selectedCell || isComplete) return;
+            
+            const key = e.key;
+            if (key >= '1' && key <= '9') {
+                placeNumber(parseInt(key));
+            } else if (key === '0' || key === 'Delete' || key === 'Backspace') {
+                placeNumber(0);
+            } else if (key.toLowerCase() === 'n') {
+                toggleNotes();
+            } else if (key.toLowerCase() === 'h') {
+                useHint();
+            } else if (key.toLowerCase() === 'u') {
+                undoMove();
+            } else if (key.toLowerCase() === 'a') {
+                toggleAutoNotes();
+            } else if (key.toLowerCase() === 'f') {
+                toggleAutoFill();
+            }
+        });
+
+        function displayAnalysis(difficulty) {
+            document.getElementById('info').style.display = 'block';
+            document.getElementById('clueCount').textContent = difficulty.clueCount;
+            document.getElementById('difficultyScore').textContent = difficulty.difficultyScore;
+            document.getElementById('emptyCells').textContent = 81 - difficulty.clueCount;
+            
+            const ratingEl = document.getElementById('rating');
+            ratingEl.textContent = difficulty.rating;
+            ratingEl.className = 'rating ' + difficulty.rating;
+            
+            // Display techniques
+            const techniques = difficulty.techniquesRequired;
+            if (Object.keys(techniques).length > 0) {
+                document.getElementById('techniques').style.display = 'block';
+                const list = document.getElementById('techniqueList');
+                list.innerHTML = '';
+                
+                const techniqueNames = {
+                    nakedSingle: 'Naked Single',
+                    hiddenSingle: 'Hidden Single',
+                    nakedPair: 'Naked Pair',
+                    hiddenPair: 'Hidden Pair',
+                    xWing: 'X-Wing',
+                    swordfish: 'Swordfish',
+                    guessing: 'Trial & Error',
+                    forcedChain: 'Forced Chain',
+                    coloring: 'Coloring'
+                };
+                
+                for (const [technique, count] of Object.entries(techniques)) {
+                    const div = document.createElement('div');
+                    div.className = 'technique';
+                    div.textContent = techniqueNames[technique] || technique;
+                    list.appendChild(div);
+                }
+            }
+        }
+
+        function showSolution() {
+            if (currentSolution) {
+                displayPuzzle(currentSolution, false); // false = not interactive
+                document.getElementById('showSolutionBtn').disabled = true;
+                document.getElementById('gameControls').style.display = 'none';
+                if (timerInterval) clearInterval(timerInterval);
+            }
+        }
+
+        // Generate initial puzzle on load
+        window.onload = () => {
+            generatePuzzle();
+        };
+    </script>
+</body>
+</html>

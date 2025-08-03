@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Sudoku with Import</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .import-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border: 2px solid #e9ecef;
+        }
+        .import-section h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #2196F3;
+        }
+        .format-help {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-size: 13px;
+            color: #666;
+            border: 1px solid #e9ecef;
+        }
+        .format-help h4 {
+            margin: 0 0 10px 0;
+            color: #495057;
+        }
+        .format-example {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 5px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .sudoku-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 50px);
+            grid-template-rows: repeat(9, 50px);
+            gap: 1px;
+            background-color: #333;
+            padding: 3px;
+            margin: 30px auto;
+            width: fit-content;
+        }
+        .cell {
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            position: relative;
+        }
+        .cell:hover:not(.given) {
+            background-color: #f0f0f0;
+        }
+        .cell.selected {
+            background-color: #bbdefb !important;
+            outline: 2px solid #1976D2;
+            outline-offset: -2px;
+        }
+        .cell.given {
+            color: #333;
+            background-color: #f5f5f5;
+            cursor: default;
+        }
+        .cell.user-input {
+            color: #1976D2;
+        }
+        .cell.error {
+            color: #d32f2f !important;
+            background-color: #ffebee !important;
+        }
+        .cell.highlight {
+            background-color: #e3f2fd;
+        }
+        .cell:nth-child(3n) {
+            border-right: 3px solid #333;
+        }
+        .cell:nth-child(n+19):nth-child(-n+27),
+        .cell:nth-child(n+46):nth-child(-n+54),
+        .cell:nth-child(n+73):nth-child(-n+81) {
+            border-bottom: 3px solid #333;
+        }
+        .cell.notes {
+            font-size: 10px !important;
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            padding: 2px;
+            align-items: center;
+            justify-items: center;
+        }
+        .cell:not(.notes) {
+            font-size: 20px;
+            display: flex;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: #2196F3;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #1976D2;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .number-buttons {
+            display: flex;
+            gap: 5px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+        .number-btn {
+            width: 45px;
+            height: 45px;
+            padding: 0;
+            font-size: 20px;
+            background: #e3f2fd;
+            color: #1976D2;
+        }
+        .number-btn:hover {
+            background: #1976D2;
+            color: white;
+            transform: scale(1.05);
+        }
+        .number-btn.clear {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+        .import-btn {
+            background: #4CAF50;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .import-btn:hover {
+            background: #45a049;
+        }
+        .auto-controls {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .auto-btn {
+            min-width: 180px;
+        }
+        .auto-btn.active {
+            background: #388e3c;
+        }
+        .auto-btn.auto-fill {
+            background: #ff5722;
+        }
+        .auto-btn.auto-fill.active {
+            background: #d32f2f;
+        }
+        .status {
+            text-align: center;
+            font-size: 18px;
+            margin: 20px 0;
+            color: #666;
+            min-height: 25px;
+        }
+        .error-msg {
+            color: #d32f2f;
+            text-align: center;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        .success-msg {
+            color: #388e3c;
+            text-align: center;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        .timer {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin: 15px 0;
+        }
+        .game-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 15px 0;
+            font-size: 16px;
+        }
+        .stat {
+            color: #666;
+        }
+        .stat-value {
+            font-weight: bold;
+            color: #333;
+        }
+        .mistakes {
+            color: #d32f2f;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .keyboard-hint {
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+            margin-top: 10px;
+        }
+        .hint-btn {
+            background: #ff9800;
+        }
+        .hint-btn:hover {
+            background: #f57c00;
+        }
+        .notes-btn {
+            background: #9c27b0;
+        }
+        .notes-btn:hover {
+            background: #7b1fa2;
+        }
+        .notes-btn.active {
+            background: #4a148c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Advanced Sudoku Solver</h1>
+        
+        <div class="import-section">
+            <h3>Import Puzzle</h3>
+            <textarea id="puzzleInput" placeholder="Paste your Sudoku puzzle here...">5.3...7..
+6..195...
+.98....6.
+8...6...3
+4..8.3..1
+7...2...6
+.6....28.
+...419..5
+....8..79</textarea>
+            <div class="format-help">
+                <h4>Supported Formats:</h4>
+                <div class="format-example">Grid format (use . or 0 for empty):
+5.3...7..
+6..195...
+.98....6.</div>
+                <div class="format-example">Single line (81 characters):
+530000700600195000098000060...</div>
+                <div class="format-example">With separators:
+5 3 . | . . . | 7 . .
+6 . . | 1 9 5 | . . .</div>
+            </div>
+            <button class="import-btn" onclick="importPuzzle()">Import Puzzle</button>
+            <div id="importError" class="error-msg"></div>
+            <div id="importSuccess" class="success-msg"></div>
+        </div>
+
+        <div class="status" id="status">Import a puzzle to begin</div>
+        
+        <div class="timer" id="timer" style="display: none;">Time: 00:00</div>
+        
+        <div class="game-stats" id="gameStats" style="display: none;">
+            <div class="stat">Clues: <span class="stat-value" id="clueCount">0</span></div>
+            <div class="stat">Mistakes: <span class="mistakes" id="mistakes">0</span> / 3</div>
+            <div class="stat">Hints: <span class="stat-value" id="hintsLeft">3</span></div>
+        </div>
+
+        <div class="sudoku-grid" id="grid"></div>
+
+        <div class="auto-controls">
+            <button class="auto-btn" id="autoNotesBtn" onclick="toggleAutoNotes()">Auto-Notes: OFF</button>
+            <button class="auto-btn auto-fill" id="autoFillBtn" onclick="toggleAutoFill()">Auto-Fill Singles: OFF</button>
+            <button class="auto-btn auto-fill" id="autoFillHiddenBtn" onclick="toggleAutoFillHidden()" style="background: #673ab7;">Auto-Fill Hidden: OFF</button>
+            <button class="auto-btn" id="autoLockedBtn" onclick="toggleAutoLocked()" style="background: #00796b;">Auto-Remove Locked: OFF</button>
+        </div>
+
+        <div class="number-buttons">
+            <button class="number-btn" onclick="placeNumber(1)">1</button>
+            <button class="number-btn" onclick="placeNumber(2)">2</button>
+            <button class="number-btn" onclick="placeNumber(3)">3</button>
+            <button class="number-btn" onclick="placeNumber(4)">4</button>
+            <button class="number-btn" onclick="placeNumber(5)">5</button>
+            <button class="number-btn" onclick="placeNumber(6)">6</button>
+            <button class="number-btn" onclick="placeNumber(7)">7</button>
+            <button class="number-btn" onclick="placeNumber(8)">8</button>
+            <button class="number-btn" onclick="placeNumber(9)">9</button>
+            <button class="number-btn clear" onclick="placeNumber(0)">⌫</button>
+        </div>
+
+        <div class="controls">
+            <button class="hint-btn" onclick="useHint()" id="hintBtn">Hint (3)</button>
+            <button class="notes-btn" onclick="toggleNotes()" id="notesBtn">Notes Mode</button>
+            <button onclick="checkProgress()">Check Progress</button>
+            <button onclick="undoMove()">Undo</button>
+            <button onclick="solvePuzzle()">Solve</button>
+            <button onclick="clearPuzzle()">Clear</button>
+        </div>
+
+        <div class="keyboard-hint">
+            Keyboard: 1-9 place number, 0/Delete clear, N notes, A auto-notes, F auto-fill, Shift+H hidden singles, L locked candidates, H hint, U undo
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let grid = [];
+        let gameGrid = [];
+        let solution = null;
+        let selectedCell = null;
+        let mistakes = 0;
+        let hints = 3;
+        let notesMode = false;
+        let autoNotesMode = false;
+        let autoFillSingles = false;
+        let autoFillHiddenSingles = false;
+        let autoRemoveLocked = false;
+        let moveHistory = [];
+        let startTime = null;
+        let timerInterval = null;
+        let isComplete = false;
+        let puzzleLoaded = false;
+
+        // Initialize empty grid
+        function initGrid() {
+            const gridElement = document.getElementById('grid');
+            gridElement.innerHTML = '';
+            
+            for (let i = 0; i < 81; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.index = i;
+                cell.addEventListener('click', selectCell);
+                gridElement.appendChild(cell);
+            }
+        }
+
+        // Parse puzzle from text
+        function parsePuzzle(text) {
+            // Remove all whitespace and common separators
+            text = text.trim()
+                .replace(/[\s\|\-\+\r\n]/g, '')
+                .replace(/[\.\_\*x]/gi, '0');
+            
+            // Check if we have exactly 81 digits
+            if (!/^[0-9]{81}$/.test(text)) {
+                // Try to extract 81 digits from multiline format
+                const lines = text.split('\n').filter(line => line.trim());
+                let digits = '';
+                
+                for (let line of lines) {
+                    const lineDigits = line.match(/[0-9\.\_\*x]/gi);
+                    if (lineDigits) {
+                        digits += lineDigits.join('').replace(/[\.\_\*x]/gi, '0');
+                    }
+                }
+                
+                if (digits.length !== 81) {
+                    throw new Error(`Invalid puzzle format. Expected 81 cells, found ${digits.length}`);
+                }
+                text = digits;
+            }
+            
+            // Convert to 2D array
+            const puzzle = [];
+            for (let i = 0; i < 9; i++) {
+                puzzle[i] = [];
+                for (let j = 0; j < 9; j++) {
+                    puzzle[i][j] = parseInt(text[i * 9 + j]);
+                }
+            }
+            
+            return puzzle;
+        }
+
+        // Import puzzle
+        function importPuzzle() {
+            const input = document.getElementById('puzzleInput').value;
+            const errorDiv = document.getElementById('importError');
+            const successDiv = document.getElementById('importSuccess');
+            
+            errorDiv.textContent = '';
+            successDiv.textContent = '';
+            
+            if (!input.trim()) {
+                errorDiv.textContent = 'Please enter a puzzle';
+                return;
+            }
+            
+            try {
+                const puzzle = parsePuzzle(input);
+                
+                // Validate clue count
+                let clueCount = 0;
+                for (let r = 0; r < 9; r++) {
+                    for (let c = 0; c < 9; c++) {
+                        if (puzzle[r][c] !== 0) clueCount++;
+                    }
+                }
+                
+                if (clueCount < 17) {
+                    errorDiv.textContent = `A valid Sudoku needs at least 17 clues. Found ${clueCount}`;
+                    return;
+                }
+                
+                // Validate puzzle is solvable
+                const testSolution = solveSudoku(puzzle.map(row => [...row]));
+                if (!testSolution) {
+                    errorDiv.textContent = 'This puzzle has no valid solution';
+                    return;
+                }
+                
+                // Load the puzzle
+                loadPuzzle(puzzle, testSolution);
+                successDiv.textContent = `Puzzle loaded successfully! (${clueCount} clues)`;
+                
+                // Clear the input
+                document.getElementById('puzzleInput').value = '';
+                
+            } catch (error) {
+                errorDiv.textContent = error.message;
+            }
+        }
+
+        // Load puzzle into game
+        function loadPuzzle(puzzle, solutionGrid) {
+            grid = puzzle.map(row => [...row]);
+            solution = solutionGrid;
+            puzzleLoaded = true;
+            
+            // Initialize game grid with cell data
+            gameGrid = [];
+            for (let r = 0; r < 9; r++) {
+                gameGrid[r] = [];
+                for (let c = 0; c < 9; c++) {
+                    gameGrid[r][c] = {
+                        value: grid[r][c],
+                        given: grid[r][c] !== 0,
+                        notes: new Set(),
+                        error: false
+                    };
+                }
+            }
+            
+            displayPuzzle();
+            resetGame();
+            
+            // Update stats
+            let clueCount = 0;
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (grid[r][c] !== 0) clueCount++;
+                }
+            }
+            document.getElementById('clueCount').textContent = clueCount;
+            
+            // Show game elements
+            document.getElementById('timer').style.display = 'block';
+            document.getElementById('gameStats').style.display = 'flex';
+            document.getElementById('status').textContent = 'Puzzle loaded. Good luck!';
+            
+            // Initialize auto-notes if enabled
+            if (autoNotesMode) {
+                initializeAutoNotes();
+            }
+        }
+
+        // Reset game state
+        function resetGame() {
+            mistakes = 0;
+            hints = 3;
+            notesMode = false;
+            moveHistory = [];
+            isComplete = false;
+            selectedCell = null;
+            
+            document.getElementById('mistakes').textContent = mistakes;
+            document.getElementById('hintsLeft').textContent = hints;
+            document.getElementById('hintBtn').textContent = `Hint (${hints})`;
+            document.getElementById('hintBtn').disabled = false;
+            document.getElementById('notesBtn').classList.remove('active');
+            
+            // Start timer
+            startTime = Date.now();
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(updateTimer, 1000);
+            updateTimer();
+        }
+
+        // Display puzzle on grid
+        function displayPuzzle() {
+            const cells = document.querySelectorAll('.cell');
+            
+            cells.forEach((cell, index) => {
+                const row = Math.floor(index / 9);
+                const col = index % 9;
+                const data = gameGrid[row][col];
+                
+                cell.classList.remove('given', 'user-input', 'error', 'selected', 'notes');
+                cell.innerHTML = '';
+                
+                if (data.given) {
+                    cell.textContent = data.value;
+                    cell.classList.add('given');
+                } else if (data.value !== 0) {
+                    cell.textContent = data.value;
+                    cell.classList.add('user-input');
+                    if (data.error) {
+                        cell.classList.add('error');
+                    }
+                } else if (data.notes.size > 0) {
+                    updateCellDisplay(cell, row, col);
+                }
+            });
+        }
+
+        // Update timer
+        function updateTimer() {
+            if (!puzzleLoaded || isComplete) return;
+            
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            document.getElementById('timer').textContent = 
+                `Time: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // Cell selection
+        function selectCell(e) {
+            if (!puzzleLoaded || isComplete) return;
+            
+            if (selectedCell) {
+                selectedCell.classList.remove('selected');
+                clearHighlights();
+            }
+            
+            selectedCell = e.target;
+            selectedCell.classList.add('selected');
+            
+            const index = parseInt(selectedCell.dataset.index);
+            const row = Math.floor(index / 9);
+            const col = index % 9;
+            
+            highlightRelated(row, col);
+        }
+
+        // Highlight related cells
+        function highlightRelated(row, col) {
+            const cells = document.querySelectorAll('.cell');
+            const value = gameGrid[row][col].value;
+            
+            cells.forEach(cell => {
+                const idx = parseInt(cell.dataset.index);
+                const r = Math.floor(idx / 9);
+                const c = idx % 9;
+                
+                // Highlight same row, column, or box
+                if (r === row || c === col || 
+                    (Math.floor(r/3) === Math.floor(row/3) && 
+                     Math.floor(c/3) === Math.floor(col/3))) {
+                    cell.classList.add('highlight');
+                }
+                
+                // Highlight same number
+                if (value && gameGrid[r][c].value === value) {
+                    cell.classList.add('highlight');
+                }
+            });
+        }
+
+        function clearHighlights() {
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.classList.remove('highlight');
+            });
+        }
+
+        // Place number
+        function placeNumber(num) {
+            if (!selectedCell || !puzzleLoaded || isComplete) return;
+            
+            const index = parseInt(selectedCell.dataset.index);
+            const row = Math.floor(index / 9);
+            const col = index % 9;
+            
+            if (gameGrid[row][col].given) return;
+            
+            // Save move for undo
+            moveHistory.push({
+                row, col,
+                oldValue: gameGrid[row][col].value,
+                oldNotes: new Set(gameGrid[row][col].notes),
+                oldError: gameGrid[row][col].error
+            });
+            
+            if (notesMode && num !== 0) {
+                // Toggle note
+                if (gameGrid[row][col].notes.has(num)) {
+                    gameGrid[row][col].notes.delete(num);
+                } else {
+                    gameGrid[row][col].notes.add(num);
+                }
+                gameGrid[row][col].value = 0;
+                updateCellDisplay(selectedCell, row, col);
+            } else {
+                // Place number
+                gameGrid[row][col].value = num;
+                gameGrid[row][col].notes.clear();
+                
+                if (num === 0) {
+                    selectedCell.textContent = '';
+                    selectedCell.classList.remove('error', 'user-input');
+                    restoreAutoNotes(row, col);
+                } else {
+                    selectedCell.textContent = num;
+                    selectedCell.classList.add('user-input');
+                    
+                    // Check if correct
+                    if (solution[row][col] !== num) {
+                        selectedCell.classList.add('error');
+                        gameGrid[row][col].error = true;
+                        mistakes++;
+                        document.getElementById('mistakes').textContent = mistakes;
+                        
+                        if (mistakes >= 3) {
+                            endGame(false);
+                        }
+                    } else {
+                        selectedCell.classList.remove('error');
+                        gameGrid[row][col].error = false;
+                        updateAutoNotes(row, col, num);
+                        checkCompletion();
+                    }
+                }
+                
+                updateCellDisplay(selectedCell, row, col);
+                highlightRelated(row, col);
+            }
+        }
+
+        // Update cell display for notes
+        function updateCellDisplay(cell, row, col) {
+            const data = gameGrid[row][col];
+            
+            if (data.notes.size > 0) {
+                cell.innerHTML = '';
+                cell.classList.add('notes');
+                cell.classList.remove('error', 'user-input');
+                for (let i = 1; i <= 9; i++) {
+                    const noteDiv = document.createElement('div');
+                    noteDiv.textContent = data.notes.has(i) ? i : '';
+                    cell.appendChild(noteDiv);
+                }
+            } else {
+                cell.classList.remove('notes');
+                cell.innerHTML = '';
+                cell.textContent = data.value || '';
+                if (data.value && !data.given) {
+                    cell.classList.add('user-input');
+                    if (data.error) {
+                        cell.classList.add('error');
+                    }
+                }
+            }
+        }
+
+        // Toggle notes mode
+        function toggleNotes() {
+            notesMode = !notesMode;
+            const btn = document.getElementById('notesBtn');
+            if (notesMode) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+
+        // Auto-notes functions
+        function toggleAutoNotes() {
+            autoNotesMode = !autoNotesMode;
+            const btn = document.getElementById('autoNotesBtn');
+            
+            if (autoNotesMode) {
+                btn.classList.add('active');
+                btn.textContent = 'Auto-Notes: ON';
+                if (puzzleLoaded) {
+                    initializeAutoNotes();
+                }
+            } else {
+                btn.classList.remove('active');
+                btn.textContent = 'Auto-Notes: OFF';
+                // Clear all notes
+                if (puzzleLoaded) {
+                    for (let r = 0; r < 9; r++) {
+                        for (let c = 0; c < 9; c++) {
+                            if (!gameGrid[r][c].given && gameGrid[r][c].value === 0) {
+                                gameGrid[r][c].notes.clear();
+                                const cell = document.querySelector(`[data-index="${r * 9 + c}"]`);
+                                updateCellDisplay(cell, r, c);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function toggleAutoFill() {
+            autoFillSingles = !autoFillSingles;
+            const btn = document.getElementById('autoFillBtn');
+            
+            if (autoFillSingles) {
+                btn.classList.add('active');
+                btn.textContent = 'Auto-Fill Singles: ON';
+                if (autoNotesMode && puzzleLoaded) {
+                    checkAndFillSingles();
+                }
+            } else {
+                btn.classList.remove('active');
+                btn.textContent = 'Auto-Fill Singles: OFF';
+            }
+        }
+
+        function toggleAutoFillHidden() {
+            autoFillHiddenSingles = !autoFillHiddenSingles;
+            const btn = document.getElementById('autoFillHiddenBtn');
+            
+            if (autoFillHiddenSingles) {
+                btn.style.background = '#512da8';
+                btn.textContent = 'Auto-Fill Hidden: ON';
+                if (autoNotesMode && puzzleLoaded) {
+                    checkAndFillHiddenSingles();
+                }
+            } else {
+                btn.style.background = '#673ab7';
+                btn.textContent = 'Auto-Fill Hidden: OFF';
+            }
+        }
+
+        function toggleAutoLocked() {
+            autoRemoveLocked = !autoRemoveLocked;
+            const btn = document.getElementById('autoLockedBtn');
+            
+            if (autoRemoveLocked) {
+                btn.style.background = '#00695c';
+                btn.textContent = 'Auto-Remove Locked: ON';
+                if (autoNotesMode && puzzleLoaded) {
+                    checkAndRemoveLockedCandidates();
+                }
+            } else {
+                btn.style.background = '#00796b';
+                btn.textContent = 'Auto-Remove Locked: OFF';
+            }
+        }
+
+        function initializeAutoNotes() {
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (!gameGrid[r][c].given && gameGrid[r][c].value === 0) {
+                        gameGrid[r][c].notes.clear();
+                        for (let num = 1; num <= 9; num++) {
+                            if (isValidPlacement(r, c, num)) {
+                                gameGrid[r][c].notes.add(num);
+                            }
+                        }
+                        const cell = document.querySelector(`[data-index="${r * 9 + c}"]`);
+                        updateCellDisplay(cell, r, c);
+                    }
+                }
+            }
+            
+            if (autoRemoveLocked) {
+                checkAndRemoveLockedCandidates();
+            } else if (autoFillSingles) {
+                checkAndFillSingles();
+            } else if (autoFillHiddenSingles) {
+                checkAndFillHiddenSingles();
+            }
+        }
+
+        function isValidPlacement(row, col, num) {
+            // Check row
+            for (let c = 0; c < 9; c++) {
+                if (gameGrid[row][c].value === num) return false;
+            }
+            
+            // Check column
+            for (let r = 0; r < 9; r++) {
+                if (gameGrid[r][col].value === num) return false;
+            }
+            
+            // Check 3x3 box
+            const boxRow = Math.floor(row / 3) * 3;
+            const boxCol = Math.floor(col / 3) * 3;
+            for (let r = boxRow; r < boxRow + 3; r++) {
+                for (let c = boxCol; c < boxCol + 3; c++) {
+                    if (gameGrid[r][c].value === num) return false;
+                }
+            }
+            
+            return true;
+        }
+
+        function updateAutoNotes(placedRow, placedCol, placedNum) {
+            if (!autoNotesMode) return;
+            
+            // Remove this number from notes in same row, column, and box
+            for (let c = 0; c < 9; c++) {
+                if (c !== placedCol && gameGrid[placedRow][c].notes.has(placedNum)) {
+                    gameGrid[placedRow][c].notes.delete(placedNum);
+                    const cell = document.querySelector(`[data-index="${placedRow * 9 + c}"]`);
+                    updateCellDisplay(cell, placedRow, c);
+                }
+            }
+            
+            for (let r = 0; r < 9; r++) {
+                if (r !== placedRow && gameGrid[r][placedCol].notes.has(placedNum)) {
+                    gameGrid[r][placedCol].notes.delete(placedNum);
+                    const cell = document.querySelector(`[data-index="${r * 9 + placedCol}"]`);
+                    updateCellDisplay(cell, r, placedCol);
+                }
+            }
+            
+            const boxRow = Math.floor(placedRow / 3) * 3;
+            const boxCol = Math.floor(placedCol / 3) * 3;
+            for (let r = boxRow; r < boxRow + 3; r++) {
+                for (let c = boxCol; c < boxCol + 3; c++) {
+                    if ((r !== placedRow || c !== placedCol) && gameGrid[r][c].notes.has(placedNum)) {
+                        gameGrid[r][c].notes.delete(placedNum);
+                        const cell = document.querySelector(`[data-index="${r * 9 + c}"]`);
+                        updateCellDisplay(cell, r, c);
+                    }
+                }
+            }
+            
+            if (autoRemoveLocked) {
+                setTimeout(() => checkAndRemoveLockedCandidates(), 100);
+            } else if (autoFillSingles) {
+                setTimeout(() => checkAndFillSingles(), 100);
+            } else if (autoFillHiddenSingles) {
+                setTimeout(() => checkAndFillHiddenSingles(), 100);
+            }
+        }
+
+        function restoreAutoNotes(row, col) {
+            if (!autoNotesMode) return;
+            
+            // Recalculate valid notes for this cell and affected cells
+            const affectedCells = new Set();
+            affectedCells.add(`${row},${col}`);
+            
+            // Add all cells in same row, column, and box
+            for (let c = 0; c < 9; c++) {
+                if (gameGrid[row][c].value === 0) affectedCells.add(`${row},${c}`);
+            }
+            for (let r = 0; r < 9; r++) {
+                if (gameGrid[r][col].value === 0) affectedCells.add(`${r},${col}`);
+            }
+            const boxRow = Math.floor(row / 3) * 3;
+            const boxCol = Math.floor(col / 3) * 3;
+            for (let r = boxRow; r < boxRow + 3; r++) {
+                for (let c = boxCol; c < boxCol + 3; c++) {
+                    if (gameGrid[r][c].value === 0) affectedCells.add(`${r},${c}`);
+                }
+            }
+            
+            // Recalculate notes for all affected cells
+            affectedCells.forEach(key => {
+                const [r, c] = key.split(',').map(Number);
+                gameGrid[r][c].notes.clear();
+                for (let num = 1; num <= 9; num++) {
+                    if (isValidPlacement(r, c, num)) {
+                        gameGrid[r][c].notes.add(num);
+                    }
+                }
+                const cell = document.querySelector(`[data-index="${r * 9 + c}"]`);
+                updateCellDisplay(cell, r, c);
+            });
+        }
+
+        function checkAndFillSingles() {
+            if (!autoFillSingles || !autoNotesMode || !puzzleLoaded) return;
+            
+            let filledAny = false;
+            
+            // Check for naked singles (cells with only one note)
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (gameGrid[r][c].value === 0 && gameGrid[r][c].notes.size === 1) {
+                        const num = Array.from(gameGrid[r][c].notes)[0];
+                        
+                        // Auto-fill this cell
+                        gameGrid[r][c].value = num;
+                        gameGrid[r][c].notes.clear();
+                        
+                        const cell = document.querySelector(`[data-index="${r * 9 + c}"]`);
+                        cell.classList.remove('notes');
+                        cell.innerHTML = '';
+                        cell.textContent = num;
+                        cell.classList.add('user-input');
+                        
+                        // Animate the auto-fill
+                        cell.style.animation = 'pulse 0.5s';
+                        setTimeout(() => {
+                            cell.style.animation = '';
+                        }, 500);
+                        
+                        // Check if correct
+                        if (solution[r][c] !== num) {
+                            cell.classList.add('error');
+                            gameGrid[r][c].error = true;
+                            mistakes++;
+                            document.getElementById('mistakes').textContent = mistakes;
+                            
+                            if (mistakes >= 3) {
+                                endGame(false);
+                                return;
+                            }
+                        } else {
+                            cell.classList.remove('error');
+                            gameGrid[r][c].error = false;
+                        }
+                        
+                        updateAutoNotes(r, c, num);
+                        filledAny = true;
+                        
+                        // Save for undo
+                        moveHistory.push({
+                            row: r, col: c,
+                            oldValue: 0,
+                            oldNotes: new Set(),
+                            autoFilled: true
+                        });
+                    }
+                }
+            }
+            
+            if (filledAny) {
+                checkCompletion();
+                // Continue checking for more singles
+                setTimeout(() => checkAndFillSingles(), 300);
+            } else if (autoFillHiddenSingles) {
+                // If no naked singles found, check for hidden singles
+                checkAndFillHiddenSingles();
+            }
+        }
+
+        function checkAndFillHiddenSingles() {
+            if (!autoFillHiddenSingles || !autoNotesMode || !puzzleLoaded) return;
+            
+            let filledAny = false;
+            
+            // Check rows for hidden singles
+            for (let row = 0; row < 9; row++) {
+                for (let num = 1; num <= 9; num++) {
+                    // Check if this number already exists in the row
+                    let exists = false;
+                    for (let col = 0; col < 9; col++) {
+                        if (gameGrid[row][col].value === num) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                    if (exists) continue;
+                    
+                    // Find all possible positions for this number in the row
+                    const possiblePositions = [];
+                    for (let col = 0; col < 9; col++) {
+                        if (gameGrid[row][col].value === 0 && gameGrid[row][col].notes.has(num)) {
+                            possiblePositions.push(col);
+                        }
+                    }
+                    
+                    // If only one position possible, fill it
+                    if (possiblePositions.length === 1) {
+                        const col = possiblePositions[0];
+                        filledAny = true;
+                        autoFillCell(row, col, num, 'row');
+                    }
+                }
+            }
+            
+            // Check columns for hidden singles
+            for (let col = 0; col < 9; col++) {
+                for (let num = 1; num <= 9; num++) {
+                    // Check if this number already exists in the column
+                    let exists = false;
+                    for (let row = 0; row < 9; row++) {
+                        if (gameGrid[row][col].value === num) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                    if (exists) continue;
+                    
+                    // Find all possible positions for this number in the column
+                    const possiblePositions = [];
+                    for (let row = 0; row < 9; row++) {
+                        if (gameGrid[row][col].value === 0 && gameGrid[row][col].notes.has(num)) {
+                            possiblePositions.push(row);
+                        }
+                    }
+                    
+                    // If only one position possible, fill it
+                    if (possiblePositions.length === 1) {
+                        const row = possiblePositions[0];
+                        // Don't fill if already filled by row check
+                        if (gameGrid[row][col].value === 0) {
+                            filledAny = true;
+                            autoFillCell(row, col, num, 'column');
+                        }
+                    }
+                }
+            }
+            
+            // Check boxes for hidden singles
+            for (let boxRow = 0; boxRow < 3; boxRow++) {
+                for (let boxCol = 0; boxCol < 3; boxCol++) {
+                    for (let num = 1; num <= 9; num++) {
+                        // Check if this number already exists in the box
+                        let exists = false;
+                        const startRow = boxRow * 3;
+                        const startCol = boxCol * 3;
+                        
+                        for (let r = startRow; r < startRow + 3; r++) {
+                            for (let c = startCol; c < startCol + 3; c++) {
+                                if (gameGrid[r][c].value === num) {
+                                    exists = true;
+                                    break;
+                                }
+                            }
+                            if (exists) break;
+                        }
+                        if (exists) continue;
+                        
+                        // Find all possible positions for this number in the box
+                        const possiblePositions = [];
+                        for (let r = startRow; r < startRow + 3; r++) {
+                            for (let c = startCol; c < startCol + 3; c++) {
+                                if (gameGrid[r][c].value === 0 && gameGrid[r][c].notes.has(num)) {
+                                    possiblePositions.push({row: r, col: c});
+                                }
+                            }
+                        }
+                        
+                        // If only one position possible, fill it
+                        if (possiblePositions.length === 1) {
+                            const {row, col} = possiblePositions[0];
+                            // Don't fill if already filled
+                            if (gameGrid[row][col].value === 0) {
+                                filledAny = true;
+                                autoFillCell(row, col, num, 'box');
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (filledAny) {
+                checkCompletion();
+                // Continue checking for more singles (both naked and hidden)
+                setTimeout(() => {
+                    if (autoFillSingles) {
+                        checkAndFillSingles();
+                    } else {
+                        checkAndFillHiddenSingles();
+                    }
+                }, 300);
+            }
+        }
+
+        function autoFillCell(row, col, num, reason) {
+            // Auto-fill this cell
+            gameGrid[row][col].value = num;
+            gameGrid[row][col].notes.clear();
+            
+            const cell = document.querySelector(`[data-index="${row * 9 + col}"]`);
+            cell.classList.remove('notes');
+            cell.innerHTML = '';
+            cell.textContent = num;
+            cell.classList.add('user-input');
+            
+            // Different animation color based on reason
+            const color = reason === 'row' ? '#2196F3' : reason === 'column' ? '#4CAF50' : '#FF9800';
+            cell.style.backgroundColor = color;
+            cell.style.animation = 'pulse 0.5s';
+            setTimeout(() => {
+                cell.style.animation = '';
+                cell.style.backgroundColor = '';
+            }, 500);
+            
+            // Check if correct
+            if (solution[row][col] !== num) {
+                cell.classList.add('error');
+                gameGrid[row][col].error = true;
+                mistakes++;
+                document.getElementById('mistakes').textContent = mistakes;
+                
+                if (mistakes >= 3) {
+                    endGame(false);
+                    return;
+                }
+            } else {
+                cell.classList.remove('error');
+                gameGrid[row][col].error = false;
+            }
+            
+            updateAutoNotes(row, col, num);
+            
+            // Save for undo
+            moveHistory.push({
+                row: row, col: col,
+                oldValue: 0,
+                oldNotes: new Set(),
+                autoFilled: true,
+                reason: `hidden-${reason}`
+            });
+        }
+
+        function checkAndRemoveLockedCandidates() {
+            if (!autoRemoveLocked || !autoNotesMode || !puzzleLoaded) return;
+            
+            let removedAny = false;
+            
+            // Check pointing pairs/triples (box to line)
+            for (let boxRow = 0; boxRow < 3; boxRow++) {
+                for (let boxCol = 0; boxCol < 3; boxCol++) {
+                    for (let num = 1; num <= 9; num++) {
+                        // Find all cells in this box that have this number as a candidate
+                        const candidateCells = [];
+                        const startRow = boxRow * 3;
+                        const startCol = boxCol * 3;
+                        
+                        for (let r = startRow; r < startRow + 3; r++) {
+                            for (let c = startCol; c < startCol + 3; c++) {
+                                if (gameGrid[r][c].value === 0 && gameGrid[r][c].notes.has(num)) {
+                                    candidateCells.push({row: r, col: c});
+                                }
+                            }
+                        }
+                        
+                        if (candidateCells.length >= 2) {
+                            // Check if all candidates are in the same row
+                            const firstRow = candidateCells[0].row;
+                            if (candidateCells.every(cell => cell.row === firstRow)) {
+                                // Remove this number from other cells in this row
+                                for (let c = 0; c < 9; c++) {
+                                    if (Math.floor(c / 3) !== boxCol) { // Outside this box
+                                        if (gameGrid[firstRow][c].notes.has(num)) {
+                                            gameGrid[firstRow][c].notes.delete(num);
+                                            const cell = document.querySelector(`[data-index="${firstRow * 9 + c}"]`);
+                                            updateCellDisplay(cell, firstRow, c);
+                                            removedAny = true;
+                                            
+                                            // Visual feedback
+                                            cell.style.backgroundColor = '#ffccbc';
+                                            setTimeout(() => {
+                                                cell.style.backgroundColor = '';
+                                            }, 500);
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Check if all candidates are in the same column
+                            const firstCol = candidateCells[0].col;
+                            if (candidateCells.every(cell => cell.col === firstCol)) {
+                                // Remove this number from other cells in this column
+                                for (let r = 0; r < 9; r++) {
+                                    if (Math.floor(r / 3) !== boxRow) { // Outside this box
+                                        if (gameGrid[r][firstCol].notes.has(num)) {
+                                            gameGrid[r][firstCol].notes.delete(num);
+                                            const cell = document.querySelector(`[data-index="${r * 9 + firstCol}"]`);
+                                            updateCellDisplay(cell, r, firstCol);
+                                            removedAny = true;
+                                            
+                                            // Visual feedback
+                                            cell.style.backgroundColor = '#c8e6c9';
+                                            setTimeout(() => {
+                                                cell.style.backgroundColor = '';
+                                            }, 500);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Check claiming (line to box)
+            // Check rows
+            for (let row = 0; row < 9; row++) {
+                for (let num = 1; num <= 9; num++) {
+                    // Find all cells in this row that have this number as a candidate
+                    const candidateCells = [];
+                    for (let col = 0; col < 9; col++) {
+                        if (gameGrid[row][col].value === 0 && gameGrid[row][col].notes.has(num)) {
+                            candidateCells.push({row: row, col: col});
+                        }
+                    }
+                    
+                    if (candidateCells.length >= 2) {
+                        // Check if all candidates are in the same box
+                        const firstBox = Math.floor(candidateCells[0].col / 3);
+                        if (candidateCells.every(cell => Math.floor(cell.col / 3) === firstBox)) {
+                            // Remove this number from other cells in this box
+                            const boxRow = Math.floor(row / 3) * 3;
+                            const boxCol = firstBox * 3;
+                            
+                            for (let r = boxRow; r < boxRow + 3; r++) {
+                                for (let c = boxCol; c < boxCol + 3; c++) {
+                                    if (r !== row && gameGrid[r][c].notes.has(num)) {
+                                        gameGrid[r][c].notes.delete(num);
+                                        const cell = document.querySelector(`[data-index="${r * 9 + c}"]`);
+                                        updateCellDisplay(cell, r, c);
+                                        removedAny = true;
+                                        
+                                        // Visual feedback
+                                        cell.style.backgroundColor = '#ffecb3';
+                                        setTimeout(() => {
+                                            cell.style.backgroundColor = '';
+                                        }, 500);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Check columns
+            for (let col = 0; col < 9; col++) {
+                for (let num = 1; num <= 9; num++) {
+                    // Find all cells in this column that have this number as a candidate
+                    const candidateCells = [];
+                    for (let row = 0; row < 9; row++) {
+                        if (gameGrid[row][col].value === 0 && gameGrid[row][col].notes.has(num)) {
+                            candidateCells.push({row: row, col: col});
+                        }
+                    }
+                    
+                    if (candidateCells.length >= 2) {
+                        // Check if all candidates are in the same box
+                        const firstBox = Math.floor(candidateCells[0].row / 3);
+                        if (candidateCells.every(cell => Math.floor(cell.row / 3) === firstBox)) {
+                            // Remove this number from other cells in this box
+                            const boxRow = firstBox * 3;
+                            const boxCol = Math.floor(col / 3) * 3;
+                            
+                            for (let r = boxRow; r < boxRow + 3; r++) {
+                                for (let c = boxCol; c < boxCol + 3; c++) {
+                                    if (c !== col && gameGrid[r][c].notes.has(num)) {
+                                        gameGrid[r][c].notes.delete(num);
+                                        const cell = document.querySelector(`[data-index="${r * 9 + c}"]`);
+                                        updateCellDisplay(cell, r, c);
+                                        removedAny = true;
+                                        
+                                        // Visual feedback
+                                        cell.style.backgroundColor = '#e1bee7';
+                                        setTimeout(() => {
+                                            cell.style.backgroundColor = '';
+                                        }, 500);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (removedAny) {
+                // After removing candidates, check for singles
+                setTimeout(() => {
+                    if (autoFillSingles) {
+                        checkAndFillSingles();
+                    } else if (autoFillHiddenSingles) {
+                        checkAndFillHiddenSingles();
+                    } else {
+                        // Continue checking for more locked candidates
+                        checkAndRemoveLockedCandidates();
+                    }
+                }, 300);
+            }
+        }
+
+        // Use hint
+        function useHint() {
+            if (!selectedCell || hints <= 0 || !puzzleLoaded || isComplete) return;
+            
+            const index = parseInt(selectedCell.dataset.index);
+            const row = Math.floor(index / 9);
+            const col = index % 9;
+            
+            if (gameGrid[row][col].given) return;
+            
+            hints--;
+            document.getElementById('hintsLeft').textContent = hints;
+            document.getElementById('hintBtn').textContent = `Hint (${hints})`;
+            if (hints === 0) {
+                document.getElementById('hintBtn').disabled = true;
+            }
+            
+            gameGrid[row][col].value = solution[row][col];
+            gameGrid[row][col].notes.clear();
+            gameGrid[row][col].error = false;
+            
+            selectedCell.textContent = solution[row][col];
+            selectedCell.classList.add('given');
+            selectedCell.classList.remove('error', 'user-input', 'notes');
+            
+            updateAutoNotes(row, col, solution[row][col]);
+            checkCompletion();
+        }
+
+        // Check progress
+        function checkProgress() {
+            if (!puzzleLoaded) return;
+            
+            let errors = 0;
+            const cells = document.querySelectorAll('.cell');
+            
+            cells.forEach((cell, index) => {
+                const row = Math.floor(index / 9);
+                const col = index % 9;
+                
+                if (gameGrid[row][col].value && 
+                    gameGrid[row][col].value !== solution[row][col]) {
+                    cell.classList.add('error');
+                    errors++;
+                } else {
+                    cell.classList.remove('error');
+                }
+            });
+            
+            alert(errors ? `${errors} errors found` : 'Looking good so far!');
+        }
+
+        // Undo move
+        function undoMove() {
+            if (moveHistory.length === 0 || !puzzleLoaded || isComplete) return;
+            
+            const move = moveHistory.pop();
+            const previousValue = gameGrid[move.row][move.col].value;
+            
+            gameGrid[move.row][move.col].value = move.oldValue;
+            gameGrid[move.row][move.col].notes = move.oldNotes;
+            gameGrid[move.row][move.col].error = move.oldError || false;
+            
+            const cell = document.querySelector(`[data-index="${move.row * 9 + move.col}"]`);
+            
+            if (move.autoFilled) {
+                cell.classList.remove('user-input', 'error');
+            }
+            
+            updateCellDisplay(cell, move.row, move.col);
+            
+            // If we're undoing a number placement and auto-notes is on, restore notes
+            if (previousValue && move.oldValue === 0 && autoNotesMode) {
+                restoreAutoNotes(move.row, move.col);
+            }
+        }
+
+        // Check completion
+        function checkCompletion() {
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (gameGrid[r][c].value !== solution[r][c]) {
+                        return;
+                    }
+                }
+            }
+            
+            endGame(true);
+        }
+
+        function endGame(won) {
+            isComplete = true;
+            clearInterval(timerInterval);
+            
+            if (won) {
+                const time = document.getElementById('timer').textContent;
+                document.getElementById('status').innerHTML = 
+                    `<span style="color: #388e3c; font-weight: bold;">Congratulations! You solved it in ${time}!</span>`;
+            } else {
+                document.getElementById('status').innerHTML = 
+                    '<span style="color: #d32f2f; font-weight: bold;">Game Over - Too many mistakes!</span>';
+            }
+        }
+
+        // Solve puzzle
+        function solvePuzzle() {
+            if (!puzzleLoaded) return;
+            
+            // Show the solution
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    gameGrid[r][c].value = solution[r][c];
+                    gameGrid[r][c].notes.clear();
+                    gameGrid[r][c].error = false;
+                }
+            }
+            
+            displayPuzzle();
+            endGame(true);
+            document.getElementById('status').textContent = 'Puzzle solved!';
+        }
+
+        // Clear puzzle
+        function clearPuzzle() {
+            if (!puzzleLoaded) return;
+            
+            // Reset to original state
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (!gameGrid[r][c].given) {
+                        gameGrid[r][c].value = 0;
+                        gameGrid[r][c].notes.clear();
+                        gameGrid[r][c].error = false;
+                    }
+                }
+            }
+            
+            displayPuzzle();
+            resetGame();
+            document.getElementById('status').textContent = 'Puzzle reset';
+            
+            if (autoNotesMode) {
+                initializeAutoNotes();
+            }
+        }
+
+        // Sudoku solver
+        function solveSudoku(board) {
+            function isValid(board, row, col, num) {
+                for (let x = 0; x < 9; x++) {
+                    if (board[row][x] === num) return false;
+                }
+                
+                for (let x = 0; x < 9; x++) {
+                    if (board[x][col] === num) return false;
+                }
+                
+                const boxRow = Math.floor(row / 3) * 3;
+                const boxCol = Math.floor(col / 3) * 3;
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        if (board[boxRow + i][boxCol + j] === num) return false;
+                    }
+                }
+                
+                return true;
+            }
+            
+            function solve(board) {
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        if (board[row][col] === 0) {
+                            for (let num = 1; num <= 9; num++) {
+                                if (isValid(board, row, col, num)) {
+                                    board[row][col] = num;
+                                    if (solve(board)) return true;
+                                    board[row][col] = 0;
+                                }
+                            }
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+            
+            if (solve(board)) {
+                return board;
+            }
+            return null;
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (!selectedCell || !puzzleLoaded || isComplete) return;
+            
+            const key = e.key;
+            if (key >= '1' && key <= '9') {
+                placeNumber(parseInt(key));
+            } else if (key === '0' || key === 'Delete' || key === 'Backspace') {
+                placeNumber(0);
+            } else if (key.toLowerCase() === 'n') {
+                toggleNotes();
+            } else if (e.shiftKey && key.toLowerCase() === 'h') {
+                // Shift+H for hidden singles toggle (to avoid conflict with hint)
+                toggleAutoFillHidden();
+            } else if (key.toLowerCase() === 'h') {
+                useHint();
+            } else if (key.toLowerCase() === 'u') {
+                undoMove();
+            } else if (key.toLowerCase() === 'a') {
+                toggleAutoNotes();
+            } else if (key.toLowerCase() === 'f') {
+                toggleAutoFill();
+            } else if (key.toLowerCase() === 'l') {
+                toggleAutoLocked();
+            }
+        });
+
+        // Initialize
+        initGrid();
+    </script>
+</body>
+</html>
