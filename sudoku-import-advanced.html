@@ -206,11 +206,14 @@
             border-radius: 8px;
             margin: 15px 0;
             text-align: center;
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
             gap: 15px;
             flex-wrap: wrap;
+        }
+        .speed-controls.show {
+            display: flex;
         }
         .speed-label {
             font-weight: bold;
@@ -307,6 +310,26 @@
         .notes-btn.active {
             background: #4a148c;
         }
+        .options-btn {
+            background: #607d8b;
+            width: 45px;
+            height: 45px;
+            padding: 0;
+            font-size: 24px;
+            border-radius: 50%;
+            position: relative;
+            margin-left: 10px;
+        }
+        .options-btn:hover {
+            background: #455a64;
+            transform: rotate(45deg);
+        }
+        .options-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+        }
     </style>
 </head>
 <body>
@@ -360,7 +383,11 @@
             <button class="auto-btn" id="autoLockedBtn" onclick="toggleAutoLocked()" style="background: #00796b;">Auto-Remove Locked: OFF</button>
         </div>
 
-        <div class="speed-controls">
+        <div class="options-container">
+            <button class="options-btn" onclick="toggleOptions()" title="Settings">⚙️</button>
+        </div>
+
+        <div class="speed-controls" id="speedControls">
             <span class="speed-label">Animation Speed:</span>
             <input type="range" class="speed-slider" id="animationSpeed" min="0" max="1000" value="500" oninput="updateAnimationSpeed(this.value)">
             <span class="speed-value" id="animationSpeedValue">500ms</span>
@@ -427,6 +454,11 @@
         function updateIntervalSpeed(value) {
             intervalDuration = parseInt(value);
             document.getElementById('intervalSpeedValue').textContent = value + 'ms';
+        }
+
+        function toggleOptions() {
+            const speedControls = document.getElementById('speedControls');
+            speedControls.classList.toggle('show');
         }
 
         // Initialize empty grid
