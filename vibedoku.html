@@ -301,12 +301,6 @@
 
         <div class="sudoku-grid" id="grid"></div>
 
-        <div class="helper-status">
-            <div class="helper-badge">Auto-Notes ON</div>
-            <div class="helper-badge">Auto-Fill Singles ON</div>
-            <div class="helper-badge">Auto-Fill Hidden ON</div>
-            <div class="helper-badge">Auto-Remove Locked ON</div>
-        </div>
 
         <div class="controls">
             <button class="new-game-btn" onclick="newGame()">New Vibedoku 🎲</button>
@@ -314,9 +308,8 @@
         </div>
 
         <div class="instructions">
-            💡 Click any empty cell to get a hint for that position<br>
-            🎯 Goal: Complete the puzzle using as few hints as possible<br>
-            ⚡ All AI helpers are active and working to assist you!
+            💡 Click any cell to reveal the emoji<br>
+            🎯 Goal: Complete the puzzle using as few clicks as possible
         </div>
     </div>
 
@@ -371,7 +364,7 @@
             selectRandomEmojis();
             createGrid();
             generatePuzzle();
-            displayPuzzle();
+            displayEmptyGrid(); // Start with all cells empty like minesweeper
             startTimer();
             initializeAutoNotes();
         }
@@ -397,10 +390,10 @@
             console.log('🎨 Selected emoji theme:', selectedPool);
             console.log('📝 Emoji mapping:', numberToEmoji);
             
-            // Display legend
+            // Display legend without numbers
             const legend = document.getElementById('emojiLegend');
-            legend.innerHTML = currentEmojis.map((emoji, i) => 
-                `<div class="emoji-item"><span>${emoji}</span> = ${i + 1}</div>`
+            legend.innerHTML = currentEmojis.map(emoji => 
+                `<div class="emoji-item"><span style="font-size: 28px;">${emoji}</span></div>`
             ).join('');
         }
 
@@ -418,55 +411,32 @@
             }
         }
 
-        // Generate a hard puzzle using the expert generator logic
+        // Generate a simple puzzle
         function generatePuzzle() {
-            console.log('🧩 Generating hard puzzle...');
+            console.log('🧩 Generating puzzle...');
             
             // First generate a complete solution
             solution = generateCompleteSolution();
             
-            // Create puzzle by removing cells strategically
-            grid = solution.map(row => [...row]);
-            const cellsToRemove = 58; // Hard difficulty
+            // Create empty grid for minesweeper style
+            grid = Array(9).fill(null).map(() => Array(9).fill(0));
             
-            let removed = 0;
-            let attempts = 0;
-            const maxAttempts = 1000;
-            
-            while (removed < cellsToRemove && attempts < maxAttempts) {
-                const row = Math.floor(Math.random() * 9);
-                const col = Math.floor(Math.random() * 9);
-                
-                if (grid[row][col] !== 0) {
-                    const temp = grid[row][col];
-                    grid[row][col] = 0;
-                    
-                    // Check if puzzle still has unique solution
-                    if (hasUniqueSolution(grid)) {
-                        removed++;
-                        console.log(`✅ Removed cell [${row},${col}], ${removed}/${cellsToRemove} cells removed`);
-                    } else {
-                        grid[row][col] = temp;
-                    }
-                }
-                attempts++;
-            }
-            
-            console.log(`📊 Generated puzzle with ${81 - removed} clues`);
-            
-            // Initialize game grid
+            // Initialize game grid - all cells start empty
             gameGrid = [];
             for (let r = 0; r < 9; r++) {
                 gameGrid[r] = [];
                 for (let c = 0; c < 9; c++) {
                     gameGrid[r][c] = {
-                        value: grid[r][c],
-                        given: grid[r][c] !== 0,
+                        value: 0,
+                        given: false,
                         notes: new Set(),
-                        hintUsed: false
+                        hintUsed: false,
+                        revealed: false
                     };
                 }
             }
+            
+            console.log('📊 Generated empty puzzle with hidden solution');
         }
 
         // Generate complete solution
@@ -544,32 +514,16 @@
             return true;
         }
 
-        // Check if puzzle has unique solution
-        function hasUniqueSolution(puzzle) {
-            const solutions = [];
-            const board = puzzle.map(row => [...row]);
+
+        // Display empty grid (minesweeper style)
+        function displayEmptyGrid() {
+            const cells = document.querySelectorAll('.cell');
             
-            function solve() {
-                for (let r = 0; r < 9; r++) {
-                    for (let c = 0; c < 9; c++) {
-                        if (board[r][c] === 0) {
-                            for (let num = 1; num <= 9; num++) {
-                                if (isValidPlacement(board, r, c, num)) {
-                                    board[r][c] = num;
-                                    solve();
-                                    board[r][c] = 0;
-                                }
-                            }
-                            return;
-                        }
-                    }
-                }
-                solutions.push(board.map(row => [...row]));
-                if (solutions.length > 1) return;
-            }
-            
-            solve();
-            return solutions.length === 1;
+            cells.forEach((cell, index) => {
+                cell.className = 'cell';
+                cell.textContent = '';
+                cell.style.backgroundColor = '#e2e8f0'; // Gray like unrevealed minesweeper cells
+            });
         }
 
         // Display puzzle on grid
@@ -622,7 +576,7 @@
             }
         }
 
-        // Handle cell click (hint request)
+        // Handle cell click (reveal cell)
         function onCellClick(e) {
             if (isComplete) return;
             
@@ -630,36 +584,38 @@
             const row = Math.floor(index / 9);
             const col = index % 9;
             
-            if (gameGrid[row][col].given || gameGrid[row][col].value !== 0) {
-                console.log(`ℹ️ Cell [${row},${col}] already filled`);
+            if (gameGrid[row][col].revealed) {
+                console.log(`ℹ️ Cell [${row},${col}] already revealed`);
                 return;
             }
             
-            // Give hint for this cell
-            giveHint(row, col);
+            // Reveal this cell
+            revealCell(row, col);
         }
 
-        // Give hint for specific cell
-        function giveHint(row, col) {
-            console.log(`💡 Hint requested for cell [${row},${col}]`);
+        // Reveal cell (like minesweeper)
+        function revealCell(row, col) {
+            console.log(`🎯 Revealing cell [${row},${col}]`);
             
             const correctValue = solution[row][col];
             gameGrid[row][col].value = correctValue;
+            gameGrid[row][col].revealed = true;
             gameGrid[row][col].hintUsed = true;
             gameGrid[row][col].notes.clear();
             
             // Update display
             const cell = document.querySelector(`[data-index="${row * 9 + col}"]`);
             cell.textContent = numberToEmoji[correctValue];
+            cell.style.backgroundColor = 'white';
             cell.classList.add('user-input', 'hint-used');
-            cell.style.animation = 'pulse 0.5s';
+            cell.style.animation = 'pulse 0.3s';
             
             // Update stats
             hintsUsed++;
-            score = Math.max(0, 1000 - (hintsUsed * 50)); // -50 points per hint
+            score = Math.max(0, 1000 - (hintsUsed * 50)); // -50 points per click
             updateStats();
             
-            console.log(`✅ Placed ${numberToEmoji[correctValue]} at [${row},${col}], Hints used: ${hintsUsed}`);
+            console.log(`✅ Revealed ${numberToEmoji[correctValue]} at [${row},${col}], Clicks: ${hintsUsed}`);
             
             // Update auto notes for affected cells
             updateAutoNotes(row, col, correctValue);
