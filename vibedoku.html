@@ -10,25 +10,29 @@
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
+            margin: 0;
+            padding: 10px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .container {
             background: rgba(255, 255, 255, 0.95);
-            padding: 30px;
+            padding: 20px;
             border-radius: 20px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.2);
             backdrop-filter: blur(10px);
+            width: 100%;
+            max-width: 600px;
         }
         @media (max-width: 600px) {
             body {
-                padding: 10px;
+                padding: 5px;
             }
             .container {
-                padding: 15px;
+                padding: 10px;
             }
         }
         h1 {
@@ -68,10 +72,10 @@
             grid-template-rows: repeat(9, 1fr);
             gap: 1px;
             background-color: #4a5568;
-            padding: 3px;
-            margin: 30px auto;
-            width: 100%;
-            max-width: 500px;
+            padding: 2px;
+            margin: 15px auto;
+            width: calc(100vw - 40px);
+            max-width: 450px;
             aspect-ratio: 1 / 1;
             box-shadow: 0 4px 20px rgba(0,0,0,0.2);
             border-radius: 10px;
@@ -79,8 +83,8 @@
         }
         @media (max-width: 600px) {
             .sudoku-grid {
-                max-width: 90vw;
-                max-height: 90vw;
+                width: calc(100vw - 20px);
+                margin: 10px auto;
             }
         }
         .cell {
@@ -88,11 +92,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: clamp(20px, 5vw, 32px);
+            font-size: clamp(16px, 4vw, 24px);
             cursor: pointer;
             transition: all 0.3s;
             position: relative;
             user-select: none;
+        }
+        .cell * {
+            pointer-events: none;
         }
         .cell:hover:not(.given) {
             background-color: #edf2f7;
@@ -120,13 +127,24 @@
             border-bottom: 3px solid #4a5568;
         }
         .cell.notes {
-            font-size: clamp(10px, 2vw, 16px) !important;
+            font-size: clamp(8px, 1.5vw, 12px) !important;
             display: grid !important;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(3, 1fr);
-            padding: 2px;
+            padding: 1px;
             align-items: center;
             justify-items: center;
+            gap: 0;
+        }
+        .cell.notes.notes-hidden {
+            font-size: 0 !important;
+        }
+        .cell.notes > div {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         @keyframes glow {
             0% { box-shadow: 0 0 5px #48bb78; }
@@ -280,9 +298,6 @@
         <h1>🎮 Vibedoku 🎮</h1>
         <p class="tagline">The fewer hints you use, the higher your vibe! 🌟</p>
         
-        <div class="emoji-legend" id="emojiLegend">
-            <!-- Emoji mappings will be shown here -->
-        </div>
 
         <div class="stats">
             <div class="stat-item">
@@ -304,6 +319,7 @@
 
         <div class="controls">
             <button class="new-game-btn" onclick="newGame()">New Vibedoku 🎲</button>
+            <button onclick="toggleNotesVisibility()" id="notesToggle">Hide Notes 🙈</button>
             <button onclick="showSolution()">Show Solution 👁️</button>
         </div>
 
@@ -353,6 +369,9 @@
             autoFillHidden: true,
             autoRemoveLocked: true
         };
+        
+        // UI states
+        let notesVisible = true;
 
         // Animation speeds
         const animationDuration = 300;
@@ -390,11 +409,7 @@
             console.log('🎨 Selected emoji theme:', selectedPool);
             console.log('📝 Emoji mapping:', numberToEmoji);
             
-            // Display legend without numbers
-            const legend = document.getElementById('emojiLegend');
-            legend.innerHTML = currentEmojis.map(emoji => 
-                `<div class="emoji-item"><span style="font-size: 28px;">${emoji}</span></div>`
-            ).join('');
+            // No legend displayed anymore
         }
 
         // Create grid elements
@@ -560,6 +575,11 @@
             if (data.notes.size > 0 && data.value === 0) {
                 cell.innerHTML = '';
                 cell.classList.add('notes');
+                if (!notesVisible) {
+                    cell.classList.add('notes-hidden');
+                } else {
+                    cell.classList.remove('notes-hidden');
+                }
                 for (let i = 1; i <= 9; i++) {
                     const noteDiv = document.createElement('div');
                     if (data.notes.has(i)) {
@@ -568,12 +588,29 @@
                     cell.appendChild(noteDiv);
                 }
             } else {
-                cell.classList.remove('notes');
+                cell.classList.remove('notes', 'notes-hidden');
                 cell.innerHTML = '';
                 if (data.value) {
                     cell.textContent = numberToEmoji[data.value];
                 }
             }
+        }
+        
+        // Toggle notes visibility
+        function toggleNotesVisibility() {
+            notesVisible = !notesVisible;
+            const btn = document.getElementById('notesToggle');
+            btn.textContent = notesVisible ? 'Hide Notes 🙈' : 'Show Notes 👁️';
+            
+            // Update all cells with notes
+            const cells = document.querySelectorAll('.cell.notes');
+            cells.forEach(cell => {
+                if (notesVisible) {
+                    cell.classList.remove('notes-hidden');
+                } else {
+                    cell.classList.add('notes-hidden');
+                }
+            });
         }
 
         // Handle cell click (reveal cell)
