@@ -312,23 +312,10 @@
         }
         .options-btn {
             background: #607d8b;
-            width: 45px;
-            height: 45px;
-            padding: 0;
-            font-size: 24px;
-            border-radius: 50%;
-            position: relative;
-            margin-left: 10px;
         }
         .options-btn:hover {
             background: #455a64;
             transform: rotate(45deg);
-        }
-        .options-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 20px 0;
         }
     </style>
 </head>
@@ -383,10 +370,6 @@
             <button class="auto-btn" id="autoLockedBtn" onclick="toggleAutoLocked()" style="background: #00796b;">Auto-Remove Locked: OFF</button>
         </div>
 
-        <div class="options-container">
-            <button class="options-btn" onclick="toggleOptions()" title="Settings">⚙️</button>
-        </div>
-
         <div class="speed-controls" id="speedControls">
             <span class="speed-label">Animation Speed:</span>
             <input type="range" class="speed-slider" id="animationSpeed" min="0" max="1000" value="500" oninput="updateAnimationSpeed(this.value)">
@@ -417,6 +400,7 @@
             <button onclick="undoMove()">Undo</button>
             <button onclick="solvePuzzle()">Solve</button>
             <button onclick="clearPuzzle()">Clear</button>
+            <button class="options-btn" onclick="toggleOptions()" title="Settings">⚙️ Options</button>
         </div>
 
         <div class="keyboard-hint">
