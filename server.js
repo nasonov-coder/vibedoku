@@ -7,7 +7,7 @@ const PORT = 3456;
 const server = http.createServer((req, res) => {
     let filePath = '.' + req.url;
     if (filePath === './') {
-        filePath = './sudoku-import-advanced.html';
+        filePath = './vibedoku.html';
     }
 
     const extname = String(path.extname(filePath)).toLowerCase();
@@ -45,6 +45,7 @@ server.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}/`);
     console.log(`Serving Sudoku game: http://localhost:${PORT}/sudoku-import-advanced.html`);
     console.log('\nAvailable games:');
+    console.log(`- Vibedoku (NEW!): http://localhost:${PORT}/vibedoku.html`);
     console.log(`- Advanced Import: http://localhost:${PORT}/sudoku-import-advanced.html`);
     console.log(`- Custom Input: http://localhost:${PORT}/sudoku-custom-input.html`);
     console.log(`- Expert Demo: http://localhost:${PORT}/sudoku-expert-demo.html`);
