@@ -136,8 +136,8 @@
             justify-items: center;
             gap: 0;
         }
-        .cell.notes.notes-hidden {
-            font-size: 0 !important;
+        .cell.notes.notes-hidden > div {
+            visibility: hidden;
         }
         .cell.notes > div {
             width: 100%;
@@ -642,6 +642,8 @@
             
             // Update display
             const cell = document.querySelector(`[data-index="${row * 9 + col}"]`);
+            cell.classList.remove('notes', 'notes-hidden'); // Remove notes class
+            cell.innerHTML = ''; // Clear any note divs
             cell.textContent = numberToEmoji[correctValue];
             cell.style.backgroundColor = 'white';
             cell.classList.add('user-input', 'hint-used');
@@ -765,8 +767,10 @@
                         gameGrid[r][c].notes.clear();
                         
                         const cell = document.querySelector(`[data-index="${r * 9 + c}"]`);
-                        cell.classList.remove('notes');
+                        cell.classList.remove('notes', 'notes-hidden');
+                        cell.innerHTML = '';
                         cell.textContent = numberToEmoji[num];
+                        cell.style.backgroundColor = 'white';
                         cell.classList.add('user-input', 'auto-filled');
                         
                         cell.style.animation = `pulse ${animationDuration}ms`;
@@ -906,7 +910,8 @@
             gameGrid[row][col].notes.clear();
             
             const cell = document.querySelector(`[data-index="${row * 9 + col}"]`);
-            cell.classList.remove('notes');
+            cell.classList.remove('notes', 'notes-hidden');
+            cell.innerHTML = '';
             cell.textContent = numberToEmoji[num];
             cell.classList.add('user-input', 'auto-filled');
             
@@ -915,7 +920,7 @@
             cell.style.animation = `pulse ${animationDuration}ms`;
             setTimeout(() => {
                 cell.style.animation = '';
-                cell.style.backgroundColor = '';
+                cell.style.backgroundColor = 'white'; // Keep white after animation
                 cell.classList.remove('auto-filled');
             }, animationDuration);
             
