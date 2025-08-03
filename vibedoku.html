@@ -72,13 +72,14 @@
             grid-template-rows: repeat(9, 1fr);
             gap: 1px;
             background-color: #4a5568;
-            padding: 3px;
+            padding: 3px 1px 1px 3px;
             margin: 15px auto;
             width: calc(100vw - 40px);
             max-width: 450px;
             aspect-ratio: 1 / 1;
             box-shadow: 0 4px 20px rgba(0,0,0,0.2);
             border-radius: 10px;
+            overflow: hidden;
         }
         @media (max-width: 600px) {
             .sudoku-grid {
@@ -139,7 +140,7 @@
             border-bottom-right-radius: 8px;
         }
         .cell.notes {
-            font-size: clamp(6px, 1.2vw, 10px) !important;
+            font-size: clamp(6px, 1.2vw, 9.2px) !important;
             display: grid !important;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(3, 1fr);
