@@ -7,7 +7,7 @@ const PORT = 3456;
 const server = http.createServer((req, res) => {
     let filePath = '.' + req.url;
     if (filePath === './') {
-        filePath = './vibedoku.html';
+        filePath = './index.html';
     }
 
     const extname = String(path.extname(filePath)).toLowerCase();

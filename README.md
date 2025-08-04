@@ -2,6 +2,8 @@
 
 An emoji-based Sudoku game with minesweeper-style gameplay. Click cells to reveal emojis and complete the puzzle using as few clicks as possible!
 
+🎮 **Play now at: https://nasonov-coder.github.io/vibedoku/**
+
 ## Features
 
 - 🎨 45+ emoji themes (animals, food, space, and more!)
