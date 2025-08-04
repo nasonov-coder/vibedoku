@@ -1,0 +1,22 @@
+{
+  "name": "vibedoku",
+  "version": "1.0.0",
+  "description": "Emoji-based Sudoku game with minesweeper-style gameplay",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "sudoku",
+    "game",
+    "emoji",
+    "puzzle",
+    "minesweeper"
+  ],
+  "author": "Dmitry",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

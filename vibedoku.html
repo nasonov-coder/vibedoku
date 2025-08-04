@@ -80,6 +80,11 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.2);
             border-radius: 10px;
             overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            touch-action: manipulation; /* Allow touch but prevent zoom */
         }
         @media (max-width: 600px) {
             .sudoku-grid {
@@ -88,7 +93,7 @@
             }
         }
         .cell {
-            background-color: white;
+            background-color: #e2e8f0; /* Gray by default for unrevealed cells */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -97,6 +102,10 @@
             transition: all 0.3s;
             position: relative;
             user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            -webkit-touch-callout: none;
         }
         .cell * {
             pointer-events: none;
@@ -331,7 +340,7 @@
 
 
         <div class="controls">
-            <button class="new-game-btn" onclick="newGame()">New Vibedoku 🎲</button>
+            <button class="new-game-btn" onclick="newGame()">New Game 🎲</button>
             <button onclick="toggleNotesVisibility()" id="notesToggle">Hide Notes 🙈</button>
         </div>
 
@@ -358,7 +367,30 @@
             nature: ['🌸', '🌺', '🌻', '🌹', '🌷', '🌲', '🌳', '🌴', '🌵', '🌾', '🌿', '☘️', '🍀', '🍁', '🍄'],
             space: ['🌟', '⭐', '🌙', '☀️', '🌤️', '⛅', '☁️', '🌈', '🌠', '💫', '✨', '🌍', '🪐', '🛸', '🚀'],
             hearts: ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💗', '💖', '💕', '💞', '💓', '💘'],
-            faces: ['😀', '😃', '😄', '😁', '😆', '😊', '😇', '🙂', '😉', '😌', '😍', '🥰', '😘', '😗', '😙']
+            faces: ['😀', '😃', '😄', '😁', '😆', '😊', '😇', '🙂', '😉', '😌', '😍', '🥰', '😘', '😗', '😙'],
+            sports: ['⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🏉', '🎱', '🏓', '🏸', '🏒', '🏑', '🥍', '🏏', '⛳'],
+            music: ['🎵', '🎶', '🎼', '🎹', '🎸', '🎻', '🎺', '🎷', '🥁', '🎤', '🎧', '🎪', '🎬', '🎮', '🎯'],
+            weather: ['☀️', '🌤', '⛅', '🌥', '☁️', '🌦', '🌧', '⛈', '🌩', '🌨', '❄️', '🌪', '🌫', '🌈', '⚡'],
+            zodiac: ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓', '⛎', '🔯', '☯️'],
+            transport: ['🚗', '🚕', '🚙', '🚌', '🚎', '🏎', '🚓', '🚑', '🚒', '🚐', '🛻', '🚚', '🚛', '🚜', '🏍'],
+            flags: ['🏳️', '🏴', '🏁', '🚩', '🏳️‍🌈', '🏳️‍⚧️', '🏴‍☠️', '🇦🇺', '🇧🇷', '🇨🇦', '🇩🇪', '🇪🇸', '🇫🇷', '🇬🇧', '🇮🇹'],
+            fantasy: ['🧙', '🧚', '🧛', '🧜', '🧝', '🧞', '🧟', '🦸', '🦹', '🤴', '👸', '🤵', '👰', '🤶', '🎅'],
+            ocean: ['🐋', '🐬', '🐟', '🐠', '🐡', '🦈', '🐙', '🦑', '🦐', '🦀', '🦞', '🦪', '🐚', '🐢', '🦭'],
+            tech: ['💻', '📱', '⌨️', '🖥️', '🖨️', '🖱️', '💾', '💿', '📷', '📹', '☎️', '📺', '📻', '⏰', '⌚'],
+            science: ['🔬', '🔭', '🧪', '🧫', '🧬', '💉', '💊', '🩺', '🩹', '🔍', '🔎', '🌡️', '⚗️', '🧲', '⚡'],
+            tools: ['🔨', '🔧', '🪛', '🔩', '⚙️', '🗜️', '⛏️', '🪓', '🔪', '🗡️', '⚔️', '🛡️', '🏹', '🪃', '🔫'],
+            office: ['📝', '📄', '📃', '📋', '📊', '📈', '📉', '📆', '📅', '📇', '📌', '📍', '📎', '🖇️', '📏'],
+            money: ['💵', '💴', '💶', '💷', '💰', '💳', '💎', '🪙', '💸', '🏦', '🏧', '💹', '🤑', '💲', '💱'],
+            plants: ['🌱', '🌿', '☘️', '🍀', '🎍', '🎋', '🍃', '🌾', '💐', '🌷', '🌹', '🥀', '🌺', '🌸', '🌼'],
+            desserts: ['🍰', '🎂', '🧁', '🥧', '🍮', '🍭', '🍬', '🍫', '🍩', '🍪', '🍦', '🍨', '🍧', '🧊', '🍡'],
+            drinks: ['☕', '🍵', '🫖', '🍶', '🍾', '🍷', '🍸', '🍹', '🍺', '🍻', '🥂', '🥃', '🧃', '🧋', '🥤'],
+            buildings: ['🏠', '🏡', '🏢', '🏣', '🏤', '🏥', '🏦', '🏨', '🏩', '🏪', '🏫', '🏬', '🏭', '🏯', '🏰'],
+            clothing: ['👔', '👕', '👖', '🧣', '🧤', '🧥', '🧦', '👗', '👘', '🥻', '🩱', '🩲', '🩳', '👙', '👚'],
+            birds: ['🦅', '🦆', '🦢', '🦉', '🦤', '🦩', '🦚', '🦜', '🦃', '🐔', '🐓', '🐣', '🐤', '🐥', '🐦'],
+            insects: ['🦋', '🐛', '🐜', '🐝', '🪲', '🐞', '🦗', '🪳', '🕷️', '🕸️', '🦂', '🦟', '🪰', '🪱', '🦠'],
+            gems: ['💎', '💍', '👑', '⚜️', '🔱', '💠', '🔷', '🔶', '🔸', '🔹', '🔺', '🔻', '🔲', '🔳', '⬜'],
+            medical: ['💊', '💉', '🩺', '🩹', '🩼', '🦴', '🦷', '🦵', '🦶', '👁️', '👃', '👂', '🫀', '🫁', '🧠'],
+            astrology: ['🌙', '🌛', '🌜', '🌚', '🌝', '🌞', '⭐', '🌟', '✨', '💫', '☄️', '🌠', '🌌', '🪐', '🛸']
         };
 
         // Game state
@@ -373,6 +405,10 @@
         let startTime = null;
         let timerInterval = null;
         let isComplete = false;
+        
+        // Swipe/drag state
+        let isDragging = false;
+        let touchedCells = new Set();
 
         // Helper states (always on)
         const helpers = {
@@ -433,9 +469,23 @@
                 const cell = document.createElement('div');
                 cell.className = 'cell';
                 cell.dataset.index = i;
-                cell.addEventListener('click', onCellClick);
+                
+                // Mouse events
+                cell.addEventListener('mousedown', onDragStart);
+                cell.addEventListener('mouseenter', onDragEnter);
+                cell.addEventListener('mouseup', onDragEnd);
+                
+                // Touch events
+                cell.addEventListener('touchstart', onTouchStart);
+                cell.addEventListener('touchmove', onTouchMove);
+                cell.addEventListener('touchend', onTouchEnd);
+                
                 gridElement.appendChild(cell);
             }
+            
+            // Global mouse up event to handle drag end outside grid
+            document.addEventListener('mouseup', onDragEnd);
+            document.addEventListener('touchend', onTouchEnd);
         }
 
         // Generate a simple puzzle
@@ -584,6 +634,15 @@
         function updateCellDisplay(cell, row, col) {
             const data = gameGrid[row][col];
             
+            // If cell is revealed, ensure it stays white and visible
+            if (data.revealed && data.value !== 0) {
+                cell.classList.remove('notes', 'notes-hidden');
+                cell.innerHTML = '';
+                cell.textContent = numberToEmoji[data.value];
+                cell.style.backgroundColor = 'white';
+                return;
+            }
+            
             if (data.notes.size > 0 && data.value === 0) {
                 cell.innerHTML = '';
                 cell.classList.add('notes');
@@ -591,6 +650,10 @@
                     cell.classList.add('notes-hidden');
                 } else {
                     cell.classList.remove('notes-hidden');
+                }
+                // Keep gray background for unrevealed cells
+                if (!data.revealed) {
+                    cell.style.backgroundColor = '#e2e8f0';
                 }
                 for (let i = 1; i <= 9; i++) {
                     const noteDiv = document.createElement('div');
@@ -604,6 +667,11 @@
                 cell.innerHTML = '';
                 if (data.value) {
                     cell.textContent = numberToEmoji[data.value];
+                    if (data.revealed) {
+                        cell.style.backgroundColor = 'white';
+                    } else {
+                        cell.style.backgroundColor = '#e2e8f0'; // Keep gray if not revealed
+                    }
                 }
             }
         }
@@ -625,21 +693,90 @@
             });
         }
 
-        // Handle cell click (reveal cell)
-        function onCellClick(e) {
+        // Mouse drag start
+        function onDragStart(e) {
             if (isComplete) return;
+            e.preventDefault();
+            isDragging = true;
+            touchedCells.clear();
             
             const index = parseInt(e.target.dataset.index);
             const row = Math.floor(index / 9);
             const col = index % 9;
             
-            if (gameGrid[row][col].revealed) {
-                console.log(`ℹ️ Cell [${row},${col}] already revealed`);
-                return;
+            if (!gameGrid[row][col].revealed) {
+                touchedCells.add(index);
+                revealCell(row, col);
             }
+        }
+        
+        // Mouse drag enter cell
+        function onDragEnter(e) {
+            if (!isDragging || isComplete) return;
             
-            // Reveal this cell
-            revealCell(row, col);
+            const index = parseInt(e.target.dataset.index);
+            const row = Math.floor(index / 9);
+            const col = index % 9;
+            
+            if (!gameGrid[row][col].revealed && !touchedCells.has(index)) {
+                touchedCells.add(index);
+                revealCell(row, col);
+            }
+        }
+        
+        // Mouse drag end
+        function onDragEnd(e) {
+            isDragging = false;
+            touchedCells.clear();
+        }
+        
+        // Touch start
+        function onTouchStart(e) {
+            if (isComplete) return;
+            
+            // Check if this is a cell touch
+            if (e.target.classList.contains('cell')) {
+                e.preventDefault(); // Only prevent default for cells
+                isDragging = true;
+                touchedCells.clear();
+                
+                const index = parseInt(e.target.dataset.index);
+                const row = Math.floor(index / 9);
+                const col = index % 9;
+                
+                if (!gameGrid[row][col].revealed) {
+                    touchedCells.add(index);
+                    revealCell(row, col);
+                }
+            }
+        }
+        
+        // Touch move
+        function onTouchMove(e) {
+            if (!isDragging || isComplete) return;
+            e.preventDefault(); // Prevent scrolling while dragging
+            
+            const touch = e.touches[0];
+            const element = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (element && element.classList.contains('cell')) {
+                const index = parseInt(element.dataset.index);
+                const row = Math.floor(index / 9);
+                const col = index % 9;
+                
+                if (!gameGrid[row][col].revealed && !touchedCells.has(index)) {
+                    touchedCells.add(index);
+                    revealCell(row, col);
+                }
+            }
+        }
+        
+        // Touch end
+        function onTouchEnd(e) {
+            if (isDragging && e.target.classList.contains('cell')) {
+                e.preventDefault(); // Only prevent default if we were dragging on cells
+            }
+            isDragging = false;
+            touchedCells.clear();
         }
 
         // Reveal cell (like minesweeper)
@@ -663,7 +800,8 @@
             
             // Update stats
             hintsUsed++;
-            score = Math.max(0, 1000 - (hintsUsed * 50)); // -50 points per click
+            // Adjusted scoring: 1000 points, expecting ~30 moves, so -30 points per click
+            score = Math.max(0, 1000 - (hintsUsed * 30));
             updateStats();
             
             console.log(`✅ Revealed ${numberToEmoji[correctValue]} at [${row},${col}], Clicks: ${hintsUsed}`);
@@ -681,7 +819,7 @@
             
             for (let r = 0; r < 9; r++) {
                 for (let c = 0; c < 9; c++) {
-                    if (!gameGrid[r][c].given && gameGrid[r][c].value === 0) {
+                    if (!gameGrid[r][c].given && gameGrid[r][c].value === 0 && !gameGrid[r][c].revealed) {
                         gameGrid[r][c].notes.clear();
                         for (let num = 1; num <= 9; num++) {
                             if (isValidMove(r, c, num)) {
@@ -777,6 +915,7 @@
                         
                         gameGrid[r][c].value = num;
                         gameGrid[r][c].notes.clear();
+                        gameGrid[r][c].revealed = true; // Mark as revealed
                         
                         const cell = document.querySelector(`[data-index="${r * 9 + c}"]`);
                         cell.classList.remove('notes', 'notes-hidden');
@@ -920,6 +1059,7 @@
         function autoFillCell(row, col, num, reason) {
             gameGrid[row][col].value = num;
             gameGrid[row][col].notes.clear();
+            gameGrid[row][col].revealed = true; // Mark as revealed
             
             const cell = document.querySelector(`[data-index="${row * 9 + col}"]`);
             cell.classList.remove('notes', 'notes-hidden');
@@ -1040,14 +1180,14 @@
             let message = '';
             if (hintsUsed === 0) {
                 message = '🌟 LEGENDARY! Perfect solve with no hints! 🌟';
-            } else if (hintsUsed <= 5) {
-                message = '🎯 Amazing! You have excellent Sudoku skills!';
-            } else if (hintsUsed <= 10) {
-                message = '👍 Great job! You solved it efficiently!';
-            } else if (hintsUsed <= 20) {
-                message = '😊 Good work! Keep practicing to use fewer hints!';
+            } else if (hintsUsed <= 25) {
+                message = '🎯 Amazing! You beat the AI helpers!';
+            } else if (hintsUsed <= 35) {
+                message = '👍 Great job! You matched the expected score!';
+            } else if (hintsUsed <= 45) {
+                message = '😊 Good work! Close to the optimal solution!';
             } else {
-                message = '✅ You did it! Try using fewer hints next time!';
+                message = '✅ You did it! The AI helpers could do more work!';
             }
             
             document.getElementById('scoreMessage').textContent = message;

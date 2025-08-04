@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  vibedoku:
+    build: .
+    container_name: vibedoku-app
+    ports:
+      - "${PORT:-3456}:3456"
+    environment:
+      - NODE_ENV=production
+      - PORT=3456
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3456/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
